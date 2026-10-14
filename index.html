@@ -10,7 +10,7 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#4f46e5">
-    <title>习惯与生活日历</title>
+    <title>习惯与目标管理看板</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -27,8 +27,8 @@
     <header class="bg-indigo-600 text-white px-5 pt-4 pb-5 rounded-b-3xl shadow-md sticky top-0 z-20">
         <div class="flex justify-between items-center mb-4">
             <div>
-                <h1 class="text-xl font-bold tracking-tight">📅 每日习惯与生活看板</h1>
-                <p class="text-xs text-indigo-200 mt-0.5" id="headerDateText">正在同步手机时间...</p>
+                <h1 class="text-xl font-bold tracking-tight">📅 每日习惯与目标看板</h1>
+                <p class="text-xs text-indigo-200 mt-0.5" id="headerDateText">自律自强，规律生活</p>
             </div>
             <div class="flex gap-1.5">
                 <button onclick="forceUpdateApp()" class="text-xs bg-indigo-500/80 active:bg-indigo-700 px-2.5 py-1.5 rounded-xl border border-indigo-400/40">
@@ -46,8 +46,8 @@
                 <p class="text-base font-bold mt-0.5" id="todayProgress">0/0</p>
             </div>
             <div>
-                <p class="text-[10px] text-indigo-200">本月打卡</p>
-                <p class="text-base font-bold text-emerald-300 mt-0.5"><span id="monthCheckCount">0</span><span class="text-xs font-normal">次</span></p>
+                <p class="text-[10px] text-indigo-200">目标突破</p>
+                <p class="text-base font-bold text-emerald-300 mt-0.5"><span id="activeGoalCount">0</span><span class="text-xs font-normal">个进行中</span></p>
             </div>
             <div>
                 <p class="text-[10px] text-indigo-200">本月学习</p>
@@ -85,7 +85,30 @@
             <div id="habitMobileList" class="space-y-3"></div>
         </section>
 
-        <!-- 视图 2：三餐与学习专属板块 -->
+        <!-- 视图 2：【🎯 目标突破】专属板块（新增！） -->
+        <section id="tab-goals" class="space-y-4 hidden">
+            <!-- 添加新目标卡片 -->
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 space-y-3">
+                <h3 class="text-sm font-bold text-slate-800">🎯 设定新突破目标</h3>
+                <div class="space-y-2">
+                    <input type="text" id="goalNameInput" placeholder="目标名称，例如：坚持规律作息 / 戒色突破..." 
+                        class="w-full px-3.5 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 select-text">
+                    <div class="flex gap-2 items-center">
+                        <span class="text-xs text-slate-500 shrink-0">目标天数：</span>
+                        <input type="number" id="goalDaysInput" value="7" min="1" max="365" 
+                            class="w-20 px-3 py-2 text-xs text-center bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 select-text">
+                        <button onclick="addNewGoal()" class="flex-1 py-2 bg-indigo-600 active:bg-indigo-700 text-white text-xs font-medium rounded-xl shadow-sm">
+                            + 开启挑战
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 目标挑战列表容器 -->
+            <div id="goalsListContainer" class="space-y-3"></div>
+        </section>
+
+        <!-- 视图 3：三餐与学习专属板块 -->
         <section id="tab-daily" class="space-y-4 hidden">
             <div class="bg-white p-3 rounded-2xl shadow-sm border border-slate-100">
                 <div class="flex justify-between items-center mb-2 px-1">
@@ -95,7 +118,6 @@
                 <div class="grid grid-cols-7 gap-1 bg-slate-100 p-1 rounded-xl" id="dailyDaySelector"></div>
             </div>
 
-            <!-- 板块 A：今日三餐记录 -->
             <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 space-y-3">
                 <div class="flex justify-between items-center">
                     <h3 class="text-sm font-bold text-slate-800">🍱 三餐饮食记录</h3>
@@ -121,7 +143,6 @@
                 </div>
             </div>
 
-            <!-- 板块 B：今日学习内容记录 -->
             <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 space-y-3">
                 <div class="flex justify-between items-center">
                     <h3 class="text-sm font-bold text-slate-800">📚 学习内容记录</h3>
@@ -145,7 +166,7 @@
             </div>
         </section>
 
-        <!-- 视图 3：每日复盘日记 -->
+        <!-- 视图 4：每日复盘日记 -->
         <section id="tab-journal" class="space-y-4 hidden">
             <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
                 <div class="grid grid-cols-7 gap-1 bg-slate-100 p-1 rounded-xl mb-4" id="daySelectorGroup"></div>
@@ -170,10 +191,9 @@
             </div>
         </section>
 
-        <!-- 视图 4：全新【月度记录】全景日历板块 -->
+        <!-- 视图 5：【月度记录】全景日历板块 -->
         <section id="tab-month" class="space-y-4 hidden">
             <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
-                <!-- 月份切换头 -->
                 <div class="flex justify-between items-center mb-4">
                     <button onclick="changeMonth(-1)" class="px-3 py-1.5 text-xs font-medium bg-slate-100 active:bg-slate-200 rounded-xl text-slate-600">◀ 上月</button>
                     <div class="text-center" onclick="jumpToCurrentMonth()">
@@ -183,15 +203,12 @@
                     <button onclick="changeMonth(1)" class="px-3 py-1.5 text-xs font-medium bg-slate-100 active:bg-slate-200 rounded-xl text-slate-600">下月 ▶</button>
                 </div>
 
-                <!-- 星期表头 -->
                 <div class="grid grid-cols-7 gap-1 text-center text-[11px] font-semibold text-slate-400 mb-2">
                     <div>一</div><div>二</div><div>三</div><div>四</div><div>五</div><div>六</div><div>日</div>
                 </div>
 
-                <!-- 月历网格 -->
                 <div id="monthCalendarGrid" class="grid grid-cols-7 gap-1.5"></div>
 
-                <!-- 图例说明 -->
                 <div class="flex justify-center gap-4 mt-4 pt-3 border-t border-slate-100 text-[10px] text-slate-400">
                     <span class="flex items-center gap-1"><i class="w-2 h-2 rounded-full bg-indigo-500"></i>已打卡</span>
                     <span class="flex items-center gap-1"><i class="w-2 h-2 rounded-full bg-amber-500"></i>三餐/学习</span>
@@ -199,13 +216,10 @@
                 </div>
             </div>
 
-            <!-- 选中日期的全天档案详情卡片 -->
-            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 space-y-3" id="monthDayDetailCard">
-                <!-- 动态渲染选中日期的完整记录 -->
-            </div>
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 space-y-3" id="monthDayDetailCard"></div>
         </section>
 
-        <!-- 视图 5：统计图表 -->
+        <!-- 视图 6：统计图表 -->
         <section id="tab-stats" class="space-y-4 hidden">
             <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
                 <h3 class="text-sm font-bold text-slate-800 mb-1">📊 本周打卡完成趋势</h3>
@@ -232,7 +246,7 @@
                 <h3 class="font-bold text-slate-800">数据备份与恢复</h3>
                 <button onclick="closeBackupModal()" class="text-slate-400 px-2">✕</button>
             </div>
-            <p class="text-xs text-slate-500">复制下方代码可备份所有月份的记录到微信或备忘录；粘贴之前的代码点击恢复即可导入。</p>
+            <p class="text-xs text-slate-500">复制下方代码可备份所有数据到微信或备忘录；粘贴之前的代码点击恢复即可导入。</p>
             <textarea id="backupText" rows="4" class="w-full p-2.5 text-xs bg-slate-50 border rounded-xl font-mono select-text"></textarea>
             <div class="flex gap-2">
                 <button onclick="copyBackup()" class="flex-1 py-2.5 bg-indigo-600 text-white text-xs font-medium rounded-xl">复制备份数据</button>
@@ -241,27 +255,31 @@
         </div>
     </div>
 
-    <!-- 底部 5 栏导航栏 -->
+    <!-- 底部 6 栏导航栏 -->
     <nav class="fixed bottom-0 inset-x-0 bg-white border-t border-slate-200/80 flex justify-around py-2 z-30" style="padding-bottom: calc(0.5rem + env(safe-area-inset-bottom));">
-        <button onclick="switchTab('habits')" id="nav-habits" class="flex flex-col items-center w-14 text-indigo-600">
+        <button onclick="switchTab('habits')" id="nav-habits" class="flex flex-col items-center w-12 text-indigo-600">
             <span class="text-base">✅</span>
-            <span class="text-[10px] font-medium mt-0.5">打卡</span>
+            <span class="text-[9px] font-medium mt-0.5">打卡</span>
         </button>
-        <button onclick="switchTab('daily')" id="nav-daily" class="flex flex-col items-center w-14 text-slate-400">
+        <button onclick="switchTab('goals')" id="nav-goals" class="flex flex-col items-center w-12 text-slate-400">
+            <span class="text-base">🎯</span>
+            <span class="text-[9px] font-medium mt-0.5">目标</span>
+        </button>
+        <button onclick="switchTab('daily')" id="nav-daily" class="flex flex-col items-center w-12 text-slate-400">
             <span class="text-base">🍱</span>
-            <span class="text-[10px] font-medium mt-0.5">三餐学习</span>
+            <span class="text-[9px] font-medium mt-0.5">三餐学习</span>
         </button>
-        <button onclick="switchTab('journal')" id="nav-journal" class="flex flex-col items-center w-14 text-slate-400">
+        <button onclick="switchTab('journal')" id="nav-journal" class="flex flex-col items-center w-12 text-slate-400">
             <span class="text-base">📖</span>
-            <span class="text-[10px] font-medium mt-0.5">复盘</span>
+            <span class="text-[9px] font-medium mt-0.5">复盘</span>
         </button>
-        <button onclick="switchTab('month')" id="nav-month" class="flex flex-col items-center w-14 text-slate-400">
+        <button onclick="switchTab('month')" id="nav-month" class="flex flex-col items-center w-12 text-slate-400">
             <span class="text-base">🗓️</span>
-            <span class="text-[10px] font-medium mt-0.5">月度记录</span>
+            <span class="text-[9px] font-medium mt-0.5">月度</span>
         </button>
-        <button onclick="switchTab('stats')" id="nav-stats" class="flex flex-col items-center w-14 text-slate-400">
+        <button onclick="switchTab('stats')" id="nav-stats" class="flex flex-col items-center w-12 text-slate-400">
             <span class="text-base">📊</span>
-            <span class="text-[10px] font-medium mt-0.5">图表</span>
+            <span class="text-[9px] font-medium mt-0.5">图表</span>
         </button>
     </nav>
 
@@ -281,7 +299,6 @@
             { emoji: '🌧️', label: '低迷' }
         ];
 
-        // --- 真实手机日期工具函数 ---
         function formatDateKey(date) {
             const y = date.getFullYear();
             const m = String(date.getMonth() + 1).padStart(2, '0');
@@ -317,10 +334,9 @@
         let currentWeekOffset = 0;
         let selectedDateKey = todayDateKey;
         let calendarYear = todayRealDate.getFullYear();
-        let calendarMonth = todayRealDate.getMonth(); // 0-11
+        let calendarMonth = todayRealDate.getMonth();
         let activeTab = 'habits';
 
-        // --- 数据加载与旧版平滑迁移 ---
         const defaultHabits = [
             { id: 1, name: '代码提交与技术复盘' },
             { id: 2, name: '英语阅读 / 听力训练' },
@@ -328,46 +344,16 @@
             { id: 4, name: '23:30前放下手机早睡' }
         ];
 
-        let habits = JSON.parse(localStorage.getItem('habits_v2_list')) || null;
-        // recordsByDate 结构: { "YYYY-MM-DD": { checks: { habitId: true }, meals: {...}, studies: [...], journal: { mood, text } } }
+        let habits = JSON.parse(localStorage.getItem('habits_v2_list')) || defaultHabits;
         let recordsByDate = JSON.parse(localStorage.getItem('records_by_date_v2')) || {};
-
-        // 如果首次升级，自动把旧版数据迁移到本周真实日期下
-        if (!habits) {
-            const oldHabits = JSON.parse(localStorage.getItem('habits_data'));
-            const oldJournals = JSON.parse(localStorage.getItem('journals_data')) || {};
-            const oldDailyLogs = JSON.parse(localStorage.getItem('daily_logs_data')) || {};
-            const currentWeekDates = getWeekDatesByOffset(0);
-
-            if (oldHabits && Array.isArray(oldHabits)) {
-                habits = oldHabits.map(h => ({ id: h.id, name: h.name }));
-                currentWeekDates.forEach((dateObj, idx) => {
-                    const key = formatDateKey(dateObj);
-                    if (!recordsByDate[key]) recordsByDate[key] = { checks: {}, meals: {}, studies: [], journal: { mood: '', text: '' } };
-                    oldHabits.forEach(h => {
-                        if (h.checks && h.checks[idx]) recordsByDate[key].checks[h.id] = true;
-                    });
-                    if (oldJournals[idx]) recordsByDate[key].journal = oldJournals[idx];
-                    if (oldDailyLogs[idx]) {
-                        recordsByDate[key].meals = oldDailyLogs[idx].meals || {};
-                        recordsByDate[key].studies = oldDailyLogs[idx].studies || [];
-                    }
-                });
-            } else {
-                habits = defaultHabits;
-            }
-            localStorage.setItem('habits_v2_list', JSON.stringify(habits));
-            localStorage.setItem('records_by_date_v2', JSON.stringify(recordsByDate));
-        }
+        // 目标突破数据结构: [ { id, name, targetDays, startDateKey, status: 'ongoing' / 'completed' / 'failed' } ]
+        let goalsList = JSON.parse(localStorage.getItem('goals_list_v1')) || [
+            { id: 101, name: '规律作息与戒端挑战', targetDays: 7, startDateKey: todayDateKey, status: 'ongoing' }
+        ];
 
         function ensureDateRecord(dateKey) {
             if (!recordsByDate[dateKey]) {
-                recordsByDate[dateKey] = {
-                    checks: {},
-                    meals: { breakfast: '', lunch: '', dinner: '', snack: '' },
-                    studies: [],
-                    journal: { mood: '', text: '' }
-                };
+                recordsByDate[dateKey] = { checks: {}, meals: { breakfast: '', lunch: '', dinner: '', snack: '' }, studies: [], journal: { mood: '', text: '' } };
             }
             if (!recordsByDate[dateKey].checks) recordsByDate[dateKey].checks = {};
             if (!recordsByDate[dateKey].meals) recordsByDate[dateKey].meals = { breakfast: '', lunch: '', dinner: '', snack: '' };
@@ -379,7 +365,6 @@
         let dailyChartInstance = null, streakChartInstance = null, studyChartInstance = null;
         let saveTimeout = null, dailySaveTimeout = null;
 
-        // 初始化顶部真实手机日期文字
         function updateHeaderRealDate() {
             const now = new Date();
             const weekDayName = DAYS[now.getDay() === 0 ? 6 : now.getDay() - 1];
@@ -387,12 +372,10 @@
         }
         updateHeaderRealDate();
 
-        // 计算某习惯截至目前的连续打卡天数
         function calculateRealStreak(habitId) {
             let streak = 0;
             let d = new Date();
             const todayKey = formatDateKey(d);
-            // 如果今天还没打，从昨天开始往前看是否连续
             if (!(recordsByDate[todayKey] && recordsByDate[todayKey].checks && recordsByDate[todayKey].checks[habitId])) {
                 d.setDate(d.getDate() - 1);
             }
@@ -414,14 +397,14 @@
 
         function switchTab(tab) {
             activeTab = tab;
-            ['habits', 'daily', 'journal', 'month', 'stats'].forEach(t => {
+            ['habits', 'goals', 'daily', 'journal', 'month', 'stats'].forEach(t => {
                 document.getElementById(`tab-${t}`).classList.toggle('hidden', t !== tab);
                 const nav = document.getElementById(`nav-${t}`);
-                nav.className = `flex flex-col items-center w-14 ${t === tab ? 'text-indigo-600' : 'text-slate-400'}`;
+                nav.className = `flex flex-col items-center w-12 ${t === tab ? 'text-indigo-600' : 'text-slate-400'}`;
             });
-            // 月度视图隐藏周导航条
-            document.getElementById('weekNavBar').classList.toggle('hidden', tab === 'month');
+            document.getElementById('weekNavBar').classList.toggle('hidden', tab === 'month' || tab === 'goals');
             if (tab === 'month') renderMonthCalendar();
+            if (tab === 'goals') renderGoalsList();
             if (tab === 'stats') updateCharts();
         }
 
@@ -455,8 +438,10 @@
         function saveAndRender() {
             localStorage.setItem('habits_v2_list', JSON.stringify(habits));
             localStorage.setItem('records_by_date_v2', JSON.stringify(recordsByDate));
+            localStorage.setItem('goals_list_v1', JSON.stringify(goalsList));
             updateWeekNavBar();
             renderMobileHabits();
+            renderGoalsList();
             renderDailySection();
             renderJournalSection();
             renderTimeline();
@@ -464,7 +449,130 @@
             if (activeTab === 'month') renderMonthCalendar();
         }
 
-        // --- 打卡面板（带真实几号显示） ---
+        // --- 目标挑战逻辑 ---
+        function addNewGoal() {
+            const nameInput = document.getElementById('goalNameInput');
+            const daysInput = document.getElementById('goalDaysInput');
+            const name = nameInput.value.trim();
+            const targetDays = parseInt(daysInput.value, 10);
+            if (!name || isNaN(targetDays) || targetDays < 1) {
+                alert('请输入有效的目标名称和天数！');
+                return;
+            }
+
+            goalsList.unshift({
+                id: Date.now(),
+                name: name,
+                targetDays: targetDays,
+                startDateKey: todayDateKey,
+                status: 'ongoing'
+            });
+            nameInput.value = '';
+            saveAndRender();
+        }
+
+        function renderGoalsList() {
+            const container = document.getElementById('goalsListContainer');
+            const todayObj = parseDateKey(todayDateKey);
+
+            if (goalsList.length === 0) {
+                container.innerHTML = `<p class="text-xs text-slate-400 text-center py-8 bg-white rounded-2xl border border-slate-100">还没有设定突破目标，在上方开启第一个挑战吧！</p>`;
+                return;
+            }
+
+            container.innerHTML = goalsList.map(goal => {
+                const startObj = parseDateKey(goal.startDateKey);
+                // 计算从开始到今天经过了多少天 (第几天)
+                const diffTime = todayObj - startObj;
+                const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+                const currentDay = Math.max(1, diffDays + 1);
+
+                // 计算截止日期
+                const endObj = new Date(startObj);
+                endObj.setDate(startObj.getDate() + goal.targetDays - 1);
+                const endDateKey = formatDateKey(endObj);
+
+                const isTargetDayReached = todayObj >= endObj;
+                const percent = Math.min(100, Math.round((currentDay / goal.targetDays) * 100));
+
+                let statusBadge = '';
+                let actionArea = '';
+
+                if (goal.status === 'completed') {
+                    statusBadge = `<span class="text-xs bg-emerald-50 text-emerald-600 px-2.5 py-0.5 rounded-full font-bold">🎉 已圆满达成</span>`;
+                    actionArea = `<button onclick="restartGoal(${goal.id})" class="w-full py-2 bg-slate-100 active:bg-slate-200 text-slate-700 text-xs font-medium rounded-xl">重新开启新一轮挑战</button>`;
+                } else if (goal.status === 'failed') {
+                    statusBadge = `<span class="text-xs bg-red-50 text-red-500 px-2.5 py-0.5 rounded-full font-bold">❌ 已放弃/重置</span>`;
+                    actionArea = `<button onclick="restartGoal(${goal.id})" class="w-full py-2 bg-indigo-600 active:bg-indigo-700 text-white text-xs font-medium rounded-xl">重新计日再战</button>`;
+                } else if (isTargetDayReached) {
+                    // 到了目标天数当天，弹出双选判定
+                    statusBadge = `<span class="text-xs bg-amber-50 text-amber-600 px-2.5 py-0.5 rounded-full font-bold">⭐ 目标达成日！请判定</span>`;
+                    actionArea = `
+                        <div class="bg-amber-50/60 p-3 rounded-xl border border-amber-200 space-y-2">
+                            <p class="text-xs font-bold text-amber-800 text-center">恭喜坚持到了最后一天！请做出判定：</p>
+                            <div class="grid grid-cols-2 gap-2">
+                                <button onclick="completeGoal(${goal.id})" class="py-2 bg-emerald-600 active:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-sm">🎉 圆满完成</button>
+                                <button onclick="failGoal(${goal.id})" class="py-2 bg-slate-200 active:bg-slate-300 text-slate-700 text-xs font-bold rounded-xl">未达成/重置</button>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    // 进行中
+                    statusBadge = `<span class="text-xs bg-indigo-50 text-indigo-600 px-2.5 py-0.5 rounded-full font-semibold">进行中 · 第 ${currentDay} / ${goal.targetDays} 天</span>`;
+                    actionArea = `
+                        <div class="flex justify-between items-center text-xs text-slate-400">
+                            <span>起始：${goal.startDateKey} ➔ 目标：${endDateKey}</span>
+                            <button onclick="failGoal(${goal.id})" class="text-red-500 active:opacity-70 font-medium">中途放弃/重置</button>
+                        </div>
+                    `;
+                }
+
+                return `
+                    <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 space-y-3">
+                        <div class="flex justify-between items-center">
+                            <span class="font-bold text-sm text-slate-800">${goal.name}</span>
+                            ${statusBadge}
+                        </div>
+
+                        ${goal.status === 'ongoing' ? `
+                            <div class="space-y-1">
+                                <div class="flex justify-between text-[11px] text-slate-500">
+                                    <span>进度 ${percent}%</span>
+                                    <span>还剩 ${Math.max(0, goal.targetDays - currentDay + 1)} 天</span>
+                                </div>
+                                <div class="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+                                    <div class="h-full bg-indigo-600 rounded-full transition-all duration-500" style="width: ${percent}%"></div>
+                                </div>
+                            </div>
+                        ` : ''}
+
+                        ${actionArea}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function completeGoal(id) {
+            const g = goalsList.find(item => item.id === id);
+            if (g) { g.status = 'completed'; saveAndRender(); }
+        }
+
+        function failGoal(id) {
+            if (!confirm('确定要放弃或重置这个目标吗？')) return;
+            const g = goalsList.find(item => item.id === id);
+            if (g) { g.status = 'failed'; saveAndRender(); }
+        }
+
+        function restartGoal(id) {
+            const g = goalsList.find(item => item.id === id);
+            if (g) {
+                g.startDateKey = todayDateKey;
+                g.status = 'ongoing';
+                saveAndRender();
+            }
+        }
+
+        // --- 打卡面板 ---
         function toggleCheckByDate(habitId, dateKey) {
             const rec = ensureDateRecord(dateKey);
             rec.checks[habitId] = !rec.checks[habitId];
@@ -691,13 +799,6 @@
             updateMetrics();
         }
 
-        function showSaveIndicator() {
-            const status = document.getElementById('saveStatus');
-            status.classList.remove('opacity-0');
-            clearTimeout(saveTimeout);
-            saveTimeout = setTimeout(() => status.classList.add('opacity-0'), 1500);
-        }
-
         function renderTimeline() {
             const container = document.getElementById('journalTimeline');
             const weekDates = getWeekDatesByOffset(currentWeekOffset);
@@ -725,7 +826,7 @@
             }).join('');
         }
 
-        // --- 全新【月度记录】全景日历渲染 ---
+        // --- 月度日历 ---
         function changeMonth(delta) {
             calendarMonth += delta;
             if (calendarMonth < 0) { calendarMonth = 11; calendarYear--; }
@@ -744,10 +845,9 @@
         function renderMonthCalendar() {
             document.getElementById('calendarMonthTitle').innerText = `${calendarYear}年 ${calendarMonth + 1}月`;
             const grid = document.getElementById('monthCalendarGrid');
-
             const firstDay = new Date(calendarYear, calendarMonth, 1);
             const daysInMonth = new Date(calendarYear, calendarMonth + 1, 0).getDate();
-            const startOffset = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1; // 周一为0
+            const startOffset = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1;
 
             let html = '';
             for (let i = 0; i < startOffset; i++) {
@@ -784,7 +884,6 @@
         }
 
         function jumpEditFromMonth(targetTab) {
-            // 计算选中日期相对于本周的周偏移量
             const selMonday = getMondayOfDate(parseDateKey(selectedDateKey));
             const curMonday = getMondayOfDate(new Date());
             const diffDays = Math.round((selMonday - curMonday) / (1000 * 60 * 60 * 24));
@@ -854,27 +953,29 @@
             `;
         }
 
-        // --- 顶部本月实时汇总指标 ---
+        // --- 汇总指标与图表 ---
         function updateMetrics() {
+            const todayIdx = getTodayIndex ? getTodayIndex() : 0;
             const total = habits.length;
             const todayRec = recordsByDate[todayDateKey];
             const todayDone = habits.filter(h => todayRec && todayRec.checks && todayRec.checks[h.id]).length;
             document.getElementById('todayProgress').innerText = `${todayDone}/${total}`;
 
-            // 统计当前手机所在月份的累计数据
+            // 进行中的目标数
+            const activeGoals = goalsList.filter(g => g.status === 'ongoing').length;
+            document.getElementById('activeGoalCount').innerText = activeGoals;
+
             const now = new Date();
             const ymPrefix = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-`;
-            let monthChecks = 0, monthStudyMins = 0, monthJournals = 0;
+            let monthStudyMins = 0, monthJournals = 0;
 
             Object.entries(recordsByDate).forEach(([key, rec]) => {
                 if (key.startsWith(ymPrefix)) {
-                    if (rec.checks) monthChecks += Object.values(rec.checks).filter(Boolean).length;
                     if (rec.studies) monthStudyMins += rec.studies.reduce((s, item) => s + (Number(item.duration) || 0), 0);
                     if (rec.journal && rec.journal.text && rec.journal.text.trim()) monthJournals++;
                 }
             });
 
-            document.getElementById('monthCheckCount').innerText = monthChecks;
             document.getElementById('monthStudyHours').innerText = (monthStudyMins / 60).toFixed(1).replace(/\.0$/, '');
             document.getElementById('monthJournalCount').innerText = monthJournals;
         }
@@ -921,7 +1022,7 @@
         }
 
         function openBackupModal() {
-            document.getElementById('backupText').value = JSON.stringify({ habits, recordsByDate });
+            document.getElementById('backupText').value = JSON.stringify({ habits, recordsByDate, goalsList });
             document.getElementById('backupModal').classList.replace('hidden', 'flex');
         }
         function closeBackupModal() { document.getElementById('backupModal').classList.replace('flex', 'hidden'); }
@@ -934,12 +1035,14 @@
                 const data = JSON.parse(document.getElementById('backupText').value);
                 if (data.habits) habits = data.habits;
                 if (data.recordsByDate) recordsByDate = data.recordsByDate;
+                if (data.goalsList) goalsList = data.goalsList;
                 saveAndRender(); closeBackupModal(); alert('恢复成功！');
             } catch (e) { alert('数据格式有误，请检查！'); }
         }
 
         document.getElementById('journalInput').addEventListener('input', handleJournalInput);
         document.getElementById('studyTopicInput').addEventListener('keypress', function(e) { if (e.key === 'Enter') addStudyItem(); });
+        document.getElementById('goalNameInput').addEventListener('keypress', function(e) { if (e.key === 'Enter') addNewGoal(); });
         saveAndRender();
     </script>
 </body>
