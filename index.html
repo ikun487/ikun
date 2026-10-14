@@ -13,7 +13,7 @@
         body { -webkit-tap-highlight-color: transparent; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
         .check-btn { transition: transform 0.15s ease, background-color 0.2s; }
         .check-btn:active { transform: scale(0.82); }
-        .safe-bottom { padding-bottom: calc(4.5rem + env(safe-area-inset-bottom)); }
+        .safe-bottom { padding-bottom: calc(5rem + env(safe-area-inset-bottom)); }
         ::-webkit-scrollbar { display: none; }
     </style>
 </head>
@@ -23,7 +23,7 @@
     <header class="bg-indigo-600 text-white px-5 pt-4 pb-5 rounded-b-3xl shadow-md sticky top-0 z-20">
         <div class="flex justify-between items-center mb-4">
             <div>
-                <h1 class="text-xl font-bold tracking-tight">📅 每日习惯与复盘</h1>
+                <h1 class="text-xl font-bold tracking-tight">📅 每日习惯与生活看板</h1>
                 <p class="text-xs text-indigo-200 mt-0.5" id="headerDateText">保持节奏，微小积累</p>
             </div>
             <button onclick="openBackupModal()" class="text-xs bg-indigo-500/80 active:bg-indigo-700 px-3 py-1.5 rounded-xl border border-indigo-400/40">
@@ -33,7 +33,7 @@
 
         <div class="grid grid-cols-4 gap-2 text-center bg-indigo-700/50 p-2.5 rounded-2xl backdrop-blur-sm">
             <div>
-                <p class="text-[10px] text-indigo-200">今日进度</p>
+                <p class="text-[10px] text-indigo-200">今日打卡</p>
                 <p class="text-base font-bold mt-0.5" id="todayProgress">0/0</p>
             </div>
             <div>
@@ -41,11 +41,11 @@
                 <p class="text-base font-bold text-emerald-300 mt-0.5" id="weekRate">0%</p>
             </div>
             <div>
-                <p class="text-[10px] text-indigo-200">最长连击</p>
-                <p class="text-base font-bold text-amber-300 mt-0.5"><span id="maxStreak">0</span>天</p>
+                <p class="text-[10px] text-indigo-200">本周学习</p>
+                <p class="text-base font-bold text-amber-300 mt-0.5"><span id="weekStudyHours">0</span><span class="text-xs font-normal">h</span></p>
             </div>
             <div>
-                <p class="text-[10px] text-indigo-200">本周日记</p>
+                <p class="text-[10px] text-indigo-200">本周复盘</p>
                 <p class="text-base font-bold text-purple-200 mt-0.5"><span id="journalCount">0</span>/7</p>
             </div>
         </div>
@@ -53,6 +53,7 @@
 
     <!-- 主体视图容器 -->
     <main class="p-4 max-w-lg mx-auto">
+
         <!-- 视图 1：打卡面板 -->
         <section id="tab-habits" class="space-y-4">
             <div class="flex gap-2 bg-white p-2 rounded-2xl shadow-sm border border-slate-100">
@@ -65,7 +66,87 @@
             <div id="habitMobileList" class="space-y-3"></div>
         </section>
 
-        <!-- 视图 2：每日复盘日记 -->
+        <!-- 视图 2：三餐与学习专属板块（新增！） -->
+        <section id="tab-daily" class="space-y-4 hidden">
+            <!-- 顶部星期切换条 -->
+            <div class="bg-white p-3 rounded-2xl shadow-sm border border-slate-100">
+                <div class="flex justify-between items-center mb-2 px-1">
+                    <span class="text-xs font-bold text-slate-700" id="dailySectionDayBadge">周三 (今天)</span>
+                    <span id="dailySaveStatus" class="text-xs text-emerald-600 font-medium opacity-0 transition-opacity">✓ 已自动保存</span>
+                </div>
+                <div class="grid grid-cols-7 gap-1 bg-slate-100 p-1 rounded-xl" id="dailyDaySelector"></div>
+            </div>
+
+            <!-- 板块 A：今日三餐记录 -->
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 space-y-3">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-sm font-bold text-slate-800 flex items-center gap-1.5">
+                        <span>🍱 今日三餐记录</span>
+                    </h3>
+                    <span class="text-[11px] text-slate-400">输入即自动保存</span>
+                </div>
+
+                <div class="space-y-2.5">
+                    <div class="flex items-center bg-amber-50/60 border border-amber-100 rounded-xl px-3 py-2">
+                        <span class="text-xs font-bold text-amber-700 w-14 shrink-0">🌅 早餐</span>
+                        <input type="text" id="meal-breakfast" oninput="handleMealInput('breakfast', this.value)" placeholder="今天早上吃了啥？" 
+                            class="w-full text-xs bg-transparent focus:outline-none text-slate-700 select-text">
+                    </div>
+
+                    <div class="flex items-center bg-orange-50/60 border border-orange-100 rounded-xl px-3 py-2">
+                        <span class="text-xs font-bold text-orange-700 w-14 shrink-0">☀️ 午餐</span>
+                        <input type="text" id="meal-lunch" oninput="handleMealInput('lunch', this.value)" placeholder="中午吃了什么好吃的？" 
+                            class="w-full text-xs bg-transparent focus:outline-none text-slate-700 select-text">
+                    </div>
+
+                    <div class="flex items-center bg-indigo-50/50 border border-indigo-100 rounded-xl px-3 py-2">
+                        <span class="text-xs font-bold text-indigo-700 w-14 shrink-0">🌙 晚餐</span>
+                        <input type="text" id="meal-dinner" oninput="handleMealInput('dinner', this.value)" placeholder="晚饭吃了啥？" 
+                            class="w-full text-xs bg-transparent focus:outline-none text-slate-700 select-text">
+                    </div>
+
+                    <div class="flex items-center bg-emerald-50/50 border border-emerald-100 rounded-xl px-3 py-2">
+                        <span class="text-xs font-bold text-emerald-700 w-14 shrink-0">🥤 加餐</span>
+                        <input type="text" id="meal-snack" oninput="handleMealInput('snack', this.value)" placeholder="水果 / 奶茶 / 夜宵 / 饮水..." 
+                            class="w-full text-xs bg-transparent focus:outline-none text-slate-700 select-text">
+                    </div>
+                </div>
+            </div>
+
+            <!-- 板块 B：今日学习内容记录 -->
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 space-y-3">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-sm font-bold text-slate-800 flex items-center gap-1.5">
+                        <span>📚 今日学习记录</span>
+                    </h3>
+                    <span class="text-xs font-semibold text-indigo-600 bg-indigo-50 px-2.5 py-0.5 rounded-full" id="dayStudyTotalBadge">今日累计 0 分钟</span>
+                </div>
+
+                <!-- 快捷科目分类胶囊 -->
+                <div class="flex gap-1.5 overflow-x-auto pb-1">
+                    <button onclick="quickFillStudy('嵌入式 / 代码调试')" class="shrink-0 text-[11px] bg-slate-100 active:bg-indigo-100 text-slate-600 px-2.5 py-1 rounded-lg">+ 💻 代码调试</button>
+                    <button onclick="quickFillStudy('英语单词 / 六级听力')" class="shrink-0 text-[11px] bg-slate-100 active:bg-indigo-100 text-slate-600 px-2.5 py-1 rounded-lg">+ 🔤 英语学习</button>
+                    <button onclick="quickFillStudy('专业课 / 理论复习')" class="shrink-0 text-[11px] bg-slate-100 active:bg-indigo-100 text-slate-600 px-2.5 py-1 rounded-lg">+ 📖 专业复习</button>
+                    <button onclick="quickFillStudy('面试准备 / 刷题总结')" class="shrink-0 text-[11px] bg-slate-100 active:bg-indigo-100 text-slate-600 px-2.5 py-1 rounded-lg">+ 🎯 面试刷题</button>
+                </div>
+
+                <!-- 添加学习条目输入栏 -->
+                <div class="flex gap-1.5">
+                    <input type="text" id="studyTopicInput" placeholder="学了什么具体内容？" 
+                        class="flex-1 px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 select-text">
+                    <input type="number" id="studyTimeInput" placeholder="分钟" value="45"
+                        class="w-16 px-2 py-2 text-xs text-center bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 select-text">
+                    <button onclick="addStudyItem()" class="px-3.5 py-2 bg-indigo-600 active:bg-indigo-700 text-white text-xs font-medium rounded-xl shrink-0">
+                        记录
+                    </button>
+                </div>
+
+                <!-- 当日学习清单列表 -->
+                <div id="studyListContainer" class="space-y-2 pt-1"></div>
+            </div>
+        </section>
+
+        <!-- 视图 3：每日复盘日记 -->
         <section id="tab-journal" class="space-y-4 hidden">
             <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
                 <div class="grid grid-cols-7 gap-1 bg-slate-100 p-1 rounded-xl mb-4" id="daySelectorGroup"></div>
@@ -92,17 +173,22 @@
             </div>
         </section>
 
-        <!-- 视图 3：统计图表 -->
+        <!-- 视图 4：统计图表 -->
         <section id="tab-stats" class="space-y-4 hidden">
             <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
                 <h3 class="text-sm font-bold text-slate-800 mb-1">📊 每日完成趋势</h3>
                 <p class="text-xs text-slate-400 mb-3">周一至周日每天完成的习惯数量</p>
-                <div class="relative h-48"><canvas id="dailyChart"></canvas></div>
+                <div class="relative h-44"><canvas id="dailyChart"></canvas></div>
+            </div>
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
+                <h3 class="text-sm font-bold text-slate-800 mb-1">📚 每日学习时长 (分钟)</h3>
+                <p class="text-xs text-slate-400 mb-3">本周每天投入的学习时间对比</p>
+                <div class="relative h-44"><canvas id="studyChart"></canvas></div>
             </div>
             <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
                 <h3 class="text-sm font-bold text-slate-800 mb-1">🔥 连续打卡排行</h3>
                 <p class="text-xs text-slate-400 mb-3">各项习惯当前连击天数</p>
-                <div class="relative h-48"><canvas id="streakChart"></canvas></div>
+                <div class="relative h-44"><canvas id="streakChart"></canvas></div>
             </div>
             <button onclick="resetData()" class="w-full py-3 text-xs text-red-500 bg-white rounded-2xl border border-red-100 active:bg-red-50">
                 恢复初始演示数据
@@ -126,19 +212,23 @@
         </div>
     </div>
 
-    <!-- 底部导航栏 -->
+    <!-- 底部 4 栏导航栏 -->
     <nav class="fixed bottom-0 inset-x-0 bg-white border-t border-slate-200/80 flex justify-around py-2 z-30" style="padding-bottom: calc(0.5rem + env(safe-area-inset-bottom));">
-        <button onclick="switchTab('habits')" id="nav-habits" class="flex flex-col items-center w-20 text-indigo-600">
+        <button onclick="switchTab('habits')" id="nav-habits" class="flex flex-col items-center w-16 text-indigo-600">
             <span class="text-lg">✅</span>
-            <span class="text-[11px] font-medium mt-0.5">今日打卡</span>
+            <span class="text-[10px] font-medium mt-0.5">今日打卡</span>
         </button>
-        <button onclick="switchTab('journal')" id="nav-journal" class="flex flex-col items-center w-20 text-slate-400">
+        <button onclick="switchTab('daily')" id="nav-daily" class="flex flex-col items-center w-16 text-slate-400">
+            <span class="text-lg">🍱</span>
+            <span class="text-[10px] font-medium mt-0.5">三餐与学习</span>
+        </button>
+        <button onclick="switchTab('journal')" id="nav-journal" class="flex flex-col items-center w-16 text-slate-400">
             <span class="text-lg">📖</span>
-            <span class="text-[11px] font-medium mt-0.5">每日复盘</span>
+            <span class="text-[10px] font-medium mt-0.5">每日复盘</span>
         </button>
-        <button onclick="switchTab('stats')" id="nav-stats" class="flex flex-col items-center w-20 text-slate-400">
+        <button onclick="switchTab('stats')" id="nav-stats" class="flex flex-col items-center w-16 text-slate-400">
             <span class="text-lg">📊</span>
-            <span class="text-[11px] font-medium mt-0.5">趋势图表</span>
+            <span class="text-[10px] font-medium mt-0.5">趋势图表</span>
         </button>
     </nav>
 
@@ -163,20 +253,47 @@
             1: { mood: '😊', text: '四项习惯全部达成！运动之后睡眠质量明显提升。' },
             2: { mood: '', text: '' }, 3: { mood: '', text: '' }, 4: { mood: '', text: '' }, 5: { mood: '', text: '' }, 6: { mood: '', text: '' }
         };
+        // 默认三餐与学习数据
+        const defaultDailyLogs = {
+            0: {
+                meals: { breakfast: '包子 + 豆浆', lunch: '食堂两荤一素', dinner: '牛肉面', snack: '苹果一个' },
+                studies: [
+                    { id: 101, topic: 'FreeRTOS 任务调度源码复盘', duration: 60 },
+                    { id: 102, topic: '六级真题阅读 2 篇', duration: 40 }
+                ]
+            },
+            1: {
+                meals: { breakfast: '鸡蛋灌饼 + 牛奶', lunch: '黄焖鸡米饭', dinner: '清淡粥配小菜', snack: '美式咖啡' },
+                studies: [
+                    { id: 103, topic: '整理工艺与嵌入式面试核心问题', duration: 50 }
+                ]
+            }
+        };
 
         let habits = JSON.parse(localStorage.getItem('habits_data')) || defaultHabits;
         let journals = JSON.parse(localStorage.getItem('journals_data')) || defaultJournals;
+        let dailyLogs = JSON.parse(localStorage.getItem('daily_logs_data')) || defaultDailyLogs;
+
         function getTodayIndex() { const day = new Date().getDay(); return day === 0 ? 6 : day - 1; }
         let selectedDayIdx = getTodayIndex();
-        let dailyChartInstance = null, streakChartInstance = null, saveTimeout = null;
+        let dailyChartInstance = null, streakChartInstance = null, studyChartInstance = null;
+        let saveTimeout = null, dailySaveTimeout = null;
 
-        document.getElementById('headerDateText').innerText = `今天是 ${DAYS[getTodayIndex()]} · 点滴积累带来改变`;
+        document.getElementById('headerDateText').innerText = `今天是 ${DAYS[getTodayIndex()]} · 记录三餐与成长`;
+
+        function ensureDailyLog(idx) {
+            if (!dailyLogs[idx]) {
+                dailyLogs[idx] = { meals: { breakfast: '', lunch: '', dinner: '', snack: '' }, studies: [] };
+            }
+            if (!dailyLogs[idx].meals) dailyLogs[idx].meals = { breakfast: '', lunch: '', dinner: '', snack: '' };
+            if (!dailyLogs[idx].studies) dailyLogs[idx].studies = [];
+        }
 
         function switchTab(tab) {
-            ['habits', 'journal', 'stats'].forEach(t => {
+            ['habits', 'daily', 'journal', 'stats'].forEach(t => {
                 document.getElementById(`tab-${t}`).classList.toggle('hidden', t !== tab);
                 const nav = document.getElementById(`nav-${t}`);
-                nav.className = `flex flex-col items-center w-20 ${t === tab ? 'text-indigo-600' : 'text-slate-400'}`;
+                nav.className = `flex flex-col items-center w-16 ${t === tab ? 'text-indigo-600' : 'text-slate-400'}`;
             });
             if (tab === 'stats') updateCharts();
         }
@@ -191,9 +308,15 @@
         function saveAndRender() {
             localStorage.setItem('habits_data', JSON.stringify(habits));
             localStorage.setItem('journals_data', JSON.stringify(journals));
-            renderMobileHabits(); renderJournalSection(); renderTimeline(); updateMetrics();
+            localStorage.setItem('daily_logs_data', JSON.stringify(dailyLogs));
+            renderMobileHabits();
+            renderDailySection();
+            renderJournalSection();
+            renderTimeline();
+            updateMetrics();
         }
 
+        // --- 打卡逻辑 ---
         function toggleCheck(habitId, dayIndex) {
             const habit = habits.find(h => h.id === habitId);
             if (habit) { habit.checks[dayIndex] = !habit.checks[dayIndex]; saveAndRender(); }
@@ -245,8 +368,120 @@
             }).join('');
         }
 
-        function selectJournalDay(idx) { selectedDayIdx = idx; renderJournalSection(); }
+        // --- 三餐与学习逻辑 ---
+        function selectDay(idx) {
+            selectedDayIdx = idx;
+            renderDailySection();
+            renderJournalSection();
+        }
 
+        function hasDailyData(idx) {
+            const d = dailyLogs[idx];
+            if (!d) return false;
+            const hasMeal = Object.values(d.meals || {}).some(v => v && v.trim().length > 0);
+            const hasStudy = (d.studies || []).length > 0;
+            return hasMeal || hasStudy;
+        }
+
+        function renderDailySection() {
+            const todayIdx = getTodayIndex();
+            ensureDailyLog(selectedDayIdx);
+            const currentLog = dailyLogs[selectedDayIdx];
+
+            document.getElementById('dailySectionDayBadge').innerText = `${DAYS[selectedDayIdx]} ${selectedDayIdx === todayIdx ? '(今天)' : ''} · 三餐与学习`;
+
+            // 渲染顶部星期切换器（带橙色小圆点提示）
+            document.getElementById('dailyDaySelector').innerHTML = SHORT_DAYS.map((day, idx) => {
+                const isSelected = idx === selectedDayIdx;
+                const hasData = hasDailyData(idx);
+                return `<button onclick="selectDay(${idx})" class="relative py-1.5 text-xs rounded-lg font-medium ${isSelected ? 'bg-white text-indigo-600 shadow-sm font-bold' : 'text-slate-500'}">${day}${hasData ? '<span class="absolute top-1 right-1 w-1.5 h-1.5 bg-amber-500 rounded-full"></span>' : ''}</button>`;
+            }).join('');
+
+            // 填充三餐输入框
+            document.getElementById('meal-breakfast').value = currentLog.meals.breakfast || '';
+            document.getElementById('meal-lunch').value = currentLog.meals.lunch || '';
+            document.getElementById('meal-dinner').value = currentLog.meals.dinner || '';
+            document.getElementById('meal-snack').value = currentLog.meals.snack || '';
+
+            // 计算当日学习总时长并渲染列表
+            const totalMins = currentLog.studies.reduce((sum, item) => sum + (Number(item.duration) || 0), 0);
+            document.getElementById('dayStudyTotalBadge').innerText = `今日累计 ${totalMins} 分钟`;
+
+            const listEl = document.getElementById('studyListContainer');
+            if (currentLog.studies.length === 0) {
+                listEl.innerHTML = `<p class="text-xs text-slate-400 text-center py-4 bg-slate-50/60 rounded-xl border border-dashed border-slate-200">今天还没有记录学习内容，在上方添加第一条吧！</p>`;
+            } else {
+                listEl.innerHTML = currentLog.studies.map(item => `
+                    <div class="flex justify-between items-center bg-slate-50 px-3.5 py-2.5 rounded-xl border border-slate-100">
+                        <div class="flex items-center gap-2 pr-2">
+                            <span class="w-2 h-2 rounded-full bg-indigo-500 shrink-0"></span>
+                            <span class="text-xs font-medium text-slate-700">${item.topic}</span>
+                        </div>
+                        <div class="flex items-center gap-2 shrink-0">
+                            <span class="text-xs font-semibold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-lg">${item.duration} min</span>
+                            <button onclick="deleteStudyItem(${item.id})" class="text-slate-300 active:text-red-500 px-1">✕</button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function handleMealInput(mealType, value) {
+            ensureDailyLog(selectedDayIdx);
+            dailyLogs[selectedDayIdx].meals[mealType] = value;
+            localStorage.setItem('daily_logs_data', JSON.stringify(dailyLogs));
+            showDailySaveIndicator();
+            // 更新日期切换器上的小圆点
+            const buttons = document.getElementById('dailyDaySelector').children;
+            if (buttons[selectedDayIdx]) {
+                const hasData = hasDailyData(selectedDayIdx);
+                const dot = buttons[selectedDayIdx].querySelector('span.rounded-full');
+                if (hasData && !dot) {
+                    buttons[selectedDayIdx].insertAdjacentHTML('beforeend', '<span class="absolute top-1 right-1 w-1.5 h-1.5 bg-amber-500 rounded-full"></span>');
+                } else if (!hasData && dot) {
+                    dot.remove();
+                }
+            }
+        }
+
+        function quickFillStudy(text) {
+            const input = document.getElementById('studyTopicInput');
+            input.value = text + '：';
+            input.focus();
+        }
+
+        function addStudyItem() {
+            const topicInput = document.getElementById('studyTopicInput');
+            const timeInput = document.getElementById('studyTimeInput');
+            const topic = topicInput.value.trim();
+            const duration = parseInt(timeInput.value, 10) || 30;
+            if (!topic) return;
+
+            ensureDailyLog(selectedDayIdx);
+            dailyLogs[selectedDayIdx].studies.push({
+                id: Date.now(),
+                topic,
+                duration
+            });
+            topicInput.value = '';
+            showDailySaveIndicator();
+            saveAndRender();
+        }
+
+        function deleteStudyItem(id) {
+            ensureDailyLog(selectedDayIdx);
+            dailyLogs[selectedDayIdx].studies = dailyLogs[selectedDayIdx].studies.filter(s => s.id !== id);
+            saveAndRender();
+        }
+
+        function showDailySaveIndicator() {
+            const status = document.getElementById('dailySaveStatus');
+            status.classList.remove('opacity-0');
+            clearTimeout(dailySaveTimeout);
+            dailySaveTimeout = setTimeout(() => status.classList.add('opacity-0'), 1500);
+        }
+
+        // --- 复盘日记逻辑 ---
         function renderJournalSection() {
             const todayIdx = getTodayIndex();
             const currentData = journals[selectedDayIdx] || { mood: '', text: '' };
@@ -254,7 +489,7 @@
             document.getElementById('daySelectorGroup').innerHTML = SHORT_DAYS.map((day, idx) => {
                 const isSelected = idx === selectedDayIdx;
                 const hasContent = journals[idx] && journals[idx].text.trim().length > 0;
-                return `<button onclick="selectJournalDay(${idx})" class="relative py-1.5 text-xs rounded-lg font-medium ${isSelected ? 'bg-white text-indigo-600 shadow-sm font-bold' : 'text-slate-500'}">${day}${hasContent ? '<span class="absolute top-1 right-1 w-1.5 h-1.5 bg-emerald-500 rounded-full"></span>' : ''}</button>`;
+                return `<button onclick="selectDay(${idx})" class="relative py-1.5 text-xs rounded-lg font-medium ${isSelected ? 'bg-white text-indigo-600 shadow-sm font-bold' : 'text-slate-500'}">${day}${hasContent ? '<span class="absolute top-1 right-1 w-1.5 h-1.5 bg-emerald-500 rounded-full"></span>' : ''}</button>`;
             }).join('');
 
             document.getElementById('moodSelector').innerHTML = MOODS.map(m => {
@@ -306,7 +541,7 @@
                 container.innerHTML = '<p class="text-xs text-slate-400 text-center py-4">本周暂无记录</p>'; return;
             }
             container.innerHTML = entries.map(item => `
-                <div onclick="selectJournalDay(${item.idx})" class="p-3 rounded-xl bg-slate-50 border border-slate-100 active:bg-indigo-50">
+                <div onclick="selectDay(${item.idx})" class="p-3 rounded-xl bg-slate-50 border border-slate-100 active:bg-indigo-50">
                     <div class="flex justify-between text-xs font-bold text-slate-700 mb-1">
                         <span>${item.dayName} ${item.mood || ''}</span>
                         <span class="text-slate-400 font-normal">达成 ${habits.filter(h => h.checks[item.idx]).length}/${habits.length}</span>
@@ -316,13 +551,23 @@
             `).join('');
         }
 
+        // --- 顶部汇总指标与图表 ---
         function updateMetrics() {
             const todayIdx = getTodayIndex(), total = habits.length;
             const todayDone = habits.filter(h => h.checks[todayIdx]).length;
             document.getElementById('todayProgress').innerText = `${todayDone}/${total}`;
             const totalChecked = habits.reduce((s, h) => s + h.checks.filter(Boolean).length, 0);
             document.getElementById('weekRate').innerText = `${total ? Math.round((totalChecked / (total * 7)) * 100) : 0}%`;
-            document.getElementById('maxStreak').innerText = habits.reduce((m, h) => Math.max(m, calculateStreak(h.checks)), 0);
+            
+            // 计算本周总学习小时数
+            let totalWeekMins = 0;
+            for (let i = 0; i < 7; i++) {
+                if (dailyLogs[i] && dailyLogs[i].studies) {
+                    totalWeekMins += dailyLogs[i].studies.reduce((sum, s) => sum + (Number(s.duration) || 0), 0);
+                }
+            }
+            document.getElementById('weekStudyHours').innerText = (totalWeekMins / 60).toFixed(1).replace(/\.0$/, '');
+
             document.getElementById('journalCount').innerText = Object.values(journals).filter(j => j && j.text && j.text.trim()).length;
         }
 
@@ -334,6 +579,18 @@
                 data: { labels: SHORT_DAYS, datasets: [{ data: dailyCounts, backgroundColor: '#4f46e5', borderRadius: 6 }] },
                 options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
             });
+
+            const studyMins = DAYS.map((_, i) => {
+                if (!dailyLogs[i] || !dailyLogs[i].studies) return 0;
+                return dailyLogs[i].studies.reduce((sum, s) => sum + (Number(s.duration) || 0), 0);
+            });
+            if (studyChartInstance) studyChartInstance.destroy();
+            studyChartInstance = new Chart(document.getElementById('studyChart'), {
+                type: 'bar',
+                data: { labels: SHORT_DAYS, datasets: [{ data: studyMins, backgroundColor: '#10b981', borderRadius: 6 }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+            });
+
             if (streakChartInstance) streakChartInstance.destroy();
             streakChartInstance = new Chart(document.getElementById('streakChart'), {
                 type: 'bar',
@@ -343,7 +600,7 @@
         }
 
         function openBackupModal() {
-            document.getElementById('backupText').value = JSON.stringify({ habits, journals });
+            document.getElementById('backupText').value = JSON.stringify({ habits, journals, dailyLogs });
             document.getElementById('backupModal').classList.replace('hidden', 'flex');
         }
         function closeBackupModal() { document.getElementById('backupModal').classList.replace('flex', 'hidden'); }
@@ -354,14 +611,18 @@
         function importBackup() {
             try {
                 const data = JSON.parse(document.getElementById('backupText').value);
-                if (data.habits && data.journals) { habits = data.habits; journals = data.journals; saveAndRender(); closeBackupModal(); alert('恢复成功！'); }
+                if (data.habits) habits = data.habits;
+                if (data.journals) journals = data.journals;
+                if (data.dailyLogs) dailyLogs = data.dailyLogs;
+                saveAndRender(); closeBackupModal(); alert('恢复成功！');
             } catch (e) { alert('数据格式有误，请检查！'); }
         }
         function resetData() {
-            if (confirm('确定恢复初始数据？')) { localStorage.clear(); location.reload(); }
+            if (confirm('确定恢复初始演示数据？')) { localStorage.clear(); location.reload(); }
         }
 
         document.getElementById('journalInput').addEventListener('input', handleJournalInput);
+        document.getElementById('studyTopicInput').addEventListener('keypress', function(e) { if (e.key === 'Enter') addStudyItem(); });
         saveAndRender();
     </script>
 </body>
