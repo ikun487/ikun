@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#4f46e5">
+    <title>习惯与复盘</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { -webkit-tap-highlight-color: transparent; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        .check-btn { transition: transform 0.15s ease, background-color 0.2s; }
+        .check-btn:active { transform: scale(0.82); }
+        .safe-bottom { padding-bottom: calc(4.5rem + env(safe-area-inset-bottom)); }
+        ::-webkit-scrollbar { display: none; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen safe-bottom select-none">
+
+    <!-- 顶部沉浸式状态栏 -->
+    <header class="bg-indigo-600 text-white px-5 pt-4 pb-5 rounded-b-3xl shadow-md sticky top-0 z-20">
+        <div class="flex justify-between items-center mb-4">
+            <div>
+                <h1 class="text-xl font-bold tracking-tight">📅 每日习惯与复盘</h1>
+                <p class="text-xs text-indigo-200 mt-0.5" id="headerDateText">保持节奏，微小积累</p>
+            </div>
+            <button onclick="openBackupModal()" class="text-xs bg-indigo-500/80 active:bg-indigo-700 px-3 py-1.5 rounded-xl border border-indigo-400/40">
+                ⚙️ 备份/恢复
+            </button>
+        </div>
+
+        <div class="grid grid-cols-4 gap-2 text-center bg-indigo-700/50 p-2.5 rounded-2xl backdrop-blur-sm">
+            <div>
+                <p class="text-[10px] text-indigo-200">今日进度</p>
+                <p class="text-base font-bold mt-0.5" id="todayProgress">0/0</p>
+            </div>
+            <div>
+                <p class="text-[10px] text-indigo-200">本周达成</p>
+                <p class="text-base font-bold text-emerald-300 mt-0.5" id="weekRate">0%</p>
+            </div>
+            <div>
+                <p class="text-[10px] text-indigo-200">最长连击</p>
+                <p class="text-base font-bold text-amber-300 mt-0.5"><span id="maxStreak">0</span>天</p>
+            </div>
+            <div>
+                <p class="text-[10px] text-indigo-200">本周日记</p>
+                <p class="text-base font-bold text-purple-200 mt-0.5"><span id="journalCount">0</span>/7</p>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主体视图容器 -->
+    <main class="p-4 max-w-lg mx-auto">
+        <!-- 视图 1：打卡面板 -->
+        <section id="tab-habits" class="space-y-4">
+            <div class="flex gap-2 bg-white p-2 rounded-2xl shadow-sm border border-slate-100">
+                <input type="text" id="habitInput" placeholder="新增每日目标，如：背单词..." 
+                    class="flex-1 px-3 py-2 text-sm bg-transparent focus:outline-none select-text">
+                <button onclick="addHabit()" class="px-4 py-2 bg-indigo-600 active:bg-indigo-700 text-white text-sm font-medium rounded-xl shadow-sm">
+                    + 添加
+                </button>
+            </div>
+            <div id="habitMobileList" class="space-y-3"></div>
+        </section>
+
+        <!-- 视图 2：每日复盘日记 -->
+        <section id="tab-journal" class="space-y-4 hidden">
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
+                <div class="grid grid-cols-7 gap-1 bg-slate-100 p-1 rounded-xl mb-4" id="daySelectorGroup"></div>
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-xs font-semibold text-slate-500" id="currentJournalDayBadge">今日状态</span>
+                    <span id="saveStatus" class="text-xs text-emerald-600 font-medium opacity-0 transition-opacity">✓ 已自动保存</span>
+                </div>
+                <div id="moodSelector" class="grid grid-cols-5 gap-1.5 mb-4"></div>
+                <textarea id="journalInput" rows="6" 
+                    placeholder="记录今天的收获、未完成的原因或随想..."
+                    class="w-full p-3.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 leading-relaxed select-text"></textarea>
+                <div class="flex justify-between items-center mt-3 text-xs text-slate-400">
+                    <div class="flex gap-3">
+                        <button onclick="insertTemplate('【今日收获】\n1. \n【改进空间】\n1. ')" class="text-indigo-600 font-medium active:opacity-70">+ 插入复盘模板</button>
+                        <button onclick="clearCurrentJournal()" class="text-slate-400 active:text-red-500">清空</button>
+                    </div>
+                    <span id="charCount">0 字</span>
+                </div>
+            </div>
+
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
+                <h3 class="text-sm font-bold text-slate-800 mb-3">🗂️ 本周复盘速览</h3>
+                <div id="journalTimeline" class="space-y-2.5"></div>
+            </div>
+        </section>
+
+        <!-- 视图 3：统计图表 -->
+        <section id="tab-stats" class="space-y-4 hidden">
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
+                <h3 class="text-sm font-bold text-slate-800 mb-1">📊 每日完成趋势</h3>
+                <p class="text-xs text-slate-400 mb-3">周一至周日每天完成的习惯数量</p>
+                <div class="relative h-48"><canvas id="dailyChart"></canvas></div>
+            </div>
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
+                <h3 class="text-sm font-bold text-slate-800 mb-1">🔥 连续打卡排行</h3>
+                <p class="text-xs text-slate-400 mb-3">各项习惯当前连击天数</p>
+                <div class="relative h-48"><canvas id="streakChart"></canvas></div>
+            </div>
+            <button onclick="resetData()" class="w-full py-3 text-xs text-red-500 bg-white rounded-2xl border border-red-100 active:bg-red-50">
+                恢复初始演示数据
+            </button>
+        </section>
+    </main>
+
+    <!-- 备份/恢复弹窗 -->
+    <div id="backupModal" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center p-4">
+        <div class="bg-white w-full max-w-sm rounded-2xl p-5 space-y-4">
+            <div class="flex justify-between items-center">
+                <h3 class="font-bold text-slate-800">数据备份与恢复</h3>
+                <button onclick="closeBackupModal()" class="text-slate-400 px-2">✕</button>
+            </div>
+            <p class="text-xs text-slate-500">复制下方代码可备份到微信或备忘录；粘贴之前的代码点击恢复即可导入。</p>
+            <textarea id="backupText" rows="4" class="w-full p-2.5 text-xs bg-slate-50 border rounded-xl font-mono select-text"></textarea>
+            <div class="flex gap-2">
+                <button onclick="copyBackup()" class="flex-1 py-2.5 bg-indigo-600 text-white text-xs font-medium rounded-xl">复制备份数据</button>
+                <button onclick="importBackup()" class="flex-1 py-2.5 bg-slate-800 text-white text-xs font-medium rounded-xl">导入并恢复</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 底部导航栏 -->
+    <nav class="fixed bottom-0 inset-x-0 bg-white border-t border-slate-200/80 flex justify-around py-2 z-30" style="padding-bottom: calc(0.5rem + env(safe-area-inset-bottom));">
+        <button onclick="switchTab('habits')" id="nav-habits" class="flex flex-col items-center w-20 text-indigo-600">
+            <span class="text-lg">✅</span>
+            <span class="text-[11px] font-medium mt-0.5">今日打卡</span>
+        </button>
+        <button onclick="switchTab('journal')" id="nav-journal" class="flex flex-col items-center w-20 text-slate-400">
+            <span class="text-lg">📖</span>
+            <span class="text-[11px] font-medium mt-0.5">每日复盘</span>
+        </button>
+        <button onclick="switchTab('stats')" id="nav-stats" class="flex flex-col items-center w-20 text-slate-400">
+            <span class="text-lg">📊</span>
+            <span class="text-[11px] font-medium mt-0.5">趋势图表</span>
+        </button>
+    </nav>
+
+    <script>
+        const DAYS = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+        const SHORT_DAYS = ['一', '二', '三', '四', '五', '六', '日'];
+        const MOODS = [
+            { emoji: '🚀', label: '高效' },
+            { emoji: '😊', label: '愉快' },
+            { emoji: '😐', label: '平稳' },
+            { emoji: '🔋', label: '疲惫' },
+            { emoji: '🌧️', label: '低迷' }
+        ];
+        const defaultHabits = [
+            { id: 1, name: '代码提交与技术复盘', checks: [true, true, true, false, true, false, false] },
+            { id: 2, name: '英语阅读 / 听力训练', checks: [true, true, true, true, false, false, false] },
+            { id: 3, name: '有氧运动 / 核心训练', checks: [false, true, false, true, true, false, false] },
+            { id: 4, name: '23:30前放下手机早睡', checks: [true, false, true, true, true, false, false] }
+        ];
+        const defaultJournals = {
+            0: { mood: '🚀', text: '【今日收获】\n顺利完成了核心模块的调试，晚上抽空背了单词。' },
+            1: { mood: '😊', text: '四项习惯全部达成！运动之后睡眠质量明显提升。' },
+            2: { mood: '', text: '' }, 3: { mood: '', text: '' }, 4: { mood: '', text: '' }, 5: { mood: '', text: '' }, 6: { mood: '', text: '' }
+        };
+
+        let habits = JSON.parse(localStorage.getItem('habits_data')) || defaultHabits;
+        let journals = JSON.parse(localStorage.getItem('journals_data')) || defaultJournals;
+        function getTodayIndex() { const day = new Date().getDay(); return day === 0 ? 6 : day - 1; }
+        let selectedDayIdx = getTodayIndex();
+        let dailyChartInstance = null, streakChartInstance = null, saveTimeout = null;
+
+        document.getElementById('headerDateText').innerText = `今天是 ${DAYS[getTodayIndex()]} · 点滴积累带来改变`;
+
+        function switchTab(tab) {
+            ['habits', 'journal', 'stats'].forEach(t => {
+                document.getElementById(`tab-${t}`).classList.toggle('hidden', t !== tab);
+                const nav = document.getElementById(`nav-${t}`);
+                nav.className = `flex flex-col items-center w-20 ${t === tab ? 'text-indigo-600' : 'text-slate-400'}`;
+            });
+            if (tab === 'stats') updateCharts();
+        }
+
+        function calculateStreak(checks) {
+            let streak = 0, lastTrue = checks.lastIndexOf(true);
+            if (lastTrue === -1) return 0;
+            for (let i = lastTrue; i >= 0; i--) { if (checks[i]) streak++; else break; }
+            return streak;
+        }
+
+        function saveAndRender() {
+            localStorage.setItem('habits_data', JSON.stringify(habits));
+            localStorage.setItem('journals_data', JSON.stringify(journals));
+            renderMobileHabits(); renderJournalSection(); renderTimeline(); updateMetrics();
+        }
+
+        function toggleCheck(habitId, dayIndex) {
+            const habit = habits.find(h => h.id === habitId);
+            if (habit) { habit.checks[dayIndex] = !habit.checks[dayIndex]; saveAndRender(); }
+        }
+
+        function addHabit() {
+            const input = document.getElementById('habitInput');
+            const name = input.value.trim();
+            if (!name) return;
+            habits.push({ id: Date.now(), name, checks: [false, false, false, false, false, false, false] });
+            input.value = ''; saveAndRender();
+        }
+
+        function deleteHabit(id) {
+            if (!confirm('删除这个习惯？')) return;
+            habits = habits.filter(h => h.id !== id); saveAndRender();
+        }
+
+        function renderMobileHabits() {
+            const container = document.getElementById('habitMobileList');
+            const todayIdx = getTodayIndex();
+            container.innerHTML = habits.map(habit => {
+                const streak = calculateStreak(habit.checks);
+                const daysHtml = habit.checks.map((checked, idx) => {
+                    const isToday = idx === todayIdx;
+                    const btnStyle = checked 
+                        ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm' 
+                        : (isToday ? 'bg-indigo-50 border-indigo-400 text-indigo-600' : 'bg-slate-50 border-slate-200 text-slate-400');
+                    return `
+                        <button onclick="toggleCheck(${habit.id}, ${idx})" class="check-btn flex flex-col items-center justify-center py-2 rounded-xl border ${btnStyle}">
+                            <span class="text-[10px] opacity-80">${SHORT_DAYS[idx]}</span>
+                            <span class="text-xs font-bold mt-0.5">${checked ? '✓' : '·'}</span>
+                        </button>
+                    `;
+                }).join('');
+
+                return `
+                    <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
+                        <div class="flex justify-between items-center mb-3">
+                            <span class="font-bold text-sm text-slate-800">${habit.name}</span>
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs px-2 py-0.5 rounded-full font-semibold ${streak > 0 ? 'bg-amber-50 text-amber-600' : 'bg-slate-100 text-slate-400'}">🔥 ${streak}天</span>
+                                <button onclick="deleteHabit(${habit.id})" class="text-slate-300 px-1">✕</button>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-7 gap-1.5">${daysHtml}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function selectJournalDay(idx) { selectedDayIdx = idx; renderJournalSection(); }
+
+        function renderJournalSection() {
+            const todayIdx = getTodayIndex();
+            const currentData = journals[selectedDayIdx] || { mood: '', text: '' };
+            document.getElementById('currentJournalDayBadge').innerText = `${DAYS[selectedDayIdx]} ${selectedDayIdx === todayIdx ? '(今天)' : ''} 状态`;
+            document.getElementById('daySelectorGroup').innerHTML = SHORT_DAYS.map((day, idx) => {
+                const isSelected = idx === selectedDayIdx;
+                const hasContent = journals[idx] && journals[idx].text.trim().length > 0;
+                return `<button onclick="selectJournalDay(${idx})" class="relative py-1.5 text-xs rounded-lg font-medium ${isSelected ? 'bg-white text-indigo-600 shadow-sm font-bold' : 'text-slate-500'}">${day}${hasContent ? '<span class="absolute top-1 right-1 w-1.5 h-1.5 bg-emerald-500 rounded-full"></span>' : ''}</button>`;
+            }).join('');
+
+            document.getElementById('moodSelector').innerHTML = MOODS.map(m => {
+                const active = currentData.mood === m.emoji;
+                return `<button onclick="selectMood('${m.emoji}')" class="py-1.5 rounded-xl border text-xs flex flex-col items-center ${active ? 'bg-indigo-50 border-indigo-400 text-indigo-700 font-bold' : 'border-slate-200 text-slate-600'}"><span class="text-base">${m.emoji}</span><span class="text-[10px] mt-0.5">${m.label}</span></button>`;
+            }).join('');
+
+            const textarea = document.getElementById('journalInput');
+            textarea.value = currentData.text;
+            document.getElementById('charCount').innerText = `${currentData.text.length} 字`;
+        }
+
+        function selectMood(emoji) {
+            if (!journals[selectedDayIdx]) journals[selectedDayIdx] = { mood: '', text: '' };
+            journals[selectedDayIdx].mood = journals[selectedDayIdx].mood === emoji ? '' : emoji;
+            showSaveIndicator(); saveAndRender();
+        }
+
+        function insertTemplate(tpl) {
+            const textarea = document.getElementById('journalInput');
+            textarea.value = (textarea.value.trim() ? textarea.value + '\n\n' : '') + tpl;
+            handleJournalInput();
+        }
+
+        function clearCurrentJournal() {
+            journals[selectedDayIdx] = { mood: '', text: '' }; showSaveIndicator(); saveAndRender();
+        }
+
+        function handleJournalInput() {
+            const text = document.getElementById('journalInput').value;
+            if (!journals[selectedDayIdx]) journals[selectedDayIdx] = { mood: '', text: '' };
+            journals[selectedDayIdx].text = text;
+            document.getElementById('charCount').innerText = `${text.length} 字`;
+            localStorage.setItem('journals_data', JSON.stringify(journals));
+            showSaveIndicator(); renderTimeline(); updateMetrics();
+        }
+
+        function showSaveIndicator() {
+            const status = document.getElementById('saveStatus');
+            status.classList.remove('opacity-0');
+            clearTimeout(saveTimeout);
+            saveTimeout = setTimeout(() => status.classList.add('opacity-0'), 1500);
+        }
+
+        function renderTimeline() {
+            const container = document.getElementById('journalTimeline');
+            const entries = DAYS.map((dayName, idx) => ({ idx, dayName, ...(journals[idx] || { mood: '', text: '' }) })).filter(i => i.text.trim() || i.mood);
+            if (!entries.length) {
+                container.innerHTML = '<p class="text-xs text-slate-400 text-center py-4">本周暂无记录</p>'; return;
+            }
+            container.innerHTML = entries.map(item => `
+                <div onclick="selectJournalDay(${item.idx})" class="p-3 rounded-xl bg-slate-50 border border-slate-100 active:bg-indigo-50">
+                    <div class="flex justify-between text-xs font-bold text-slate-700 mb-1">
+                        <span>${item.dayName} ${item.mood || ''}</span>
+                        <span class="text-slate-400 font-normal">达成 ${habits.filter(h => h.checks[item.idx]).length}/${habits.length}</span>
+                    </div>
+                    <p class="text-xs text-slate-600 line-clamp-2 whitespace-pre-line">${item.text || '（仅记录状态）'}</p>
+                </div>
+            `).join('');
+        }
+
+        function updateMetrics() {
+            const todayIdx = getTodayIndex(), total = habits.length;
+            const todayDone = habits.filter(h => h.checks[todayIdx]).length;
+            document.getElementById('todayProgress').innerText = `${todayDone}/${total}`;
+            const totalChecked = habits.reduce((s, h) => s + h.checks.filter(Boolean).length, 0);
+            document.getElementById('weekRate').innerText = `${total ? Math.round((totalChecked / (total * 7)) * 100) : 0}%`;
+            document.getElementById('maxStreak').innerText = habits.reduce((m, h) => Math.max(m, calculateStreak(h.checks)), 0);
+            document.getElementById('journalCount').innerText = Object.values(journals).filter(j => j && j.text && j.text.trim()).length;
+        }
+
+        function updateCharts() {
+            const dailyCounts = DAYS.map((_, i) => habits.reduce((s, h) => s + (h.checks[i] ? 1 : 0), 0));
+            if (dailyChartInstance) dailyChartInstance.destroy();
+            dailyChartInstance = new Chart(document.getElementById('dailyChart'), {
+                type: 'bar',
+                data: { labels: SHORT_DAYS, datasets: [{ data: dailyCounts, backgroundColor: '#4f46e5', borderRadius: 6 }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+            });
+            if (streakChartInstance) streakChartInstance.destroy();
+            streakChartInstance = new Chart(document.getElementById('streakChart'), {
+                type: 'bar',
+                data: { labels: habits.map(h => h.name.slice(0, 6)), datasets: [{ data: habits.map(h => calculateStreak(h.checks)), backgroundColor: '#f59e0b', borderRadius: 6 }] },
+                options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true, max: 7, ticks: { stepSize: 1 } } } }
+            });
+        }
+
+        function openBackupModal() {
+            document.getElementById('backupText').value = JSON.stringify({ habits, journals });
+            document.getElementById('backupModal').classList.replace('hidden', 'flex');
+        }
+        function closeBackupModal() { document.getElementById('backupModal').classList.replace('flex', 'hidden'); }
+        function copyBackup() {
+            const el = document.getElementById('backupText'); el.select(); document.execCommand('copy');
+            alert('备份代码已复制！可粘贴到微信文件传输助手保存。');
+        }
+        function importBackup() {
+            try {
+                const data = JSON.parse(document.getElementById('backupText').value);
+                if (data.habits && data.journals) { habits = data.habits; journals = data.journals; saveAndRender(); closeBackupModal(); alert('恢复成功！'); }
+            } catch (e) { alert('数据格式有误，请检查！'); }
+        }
+        function resetData() {
+            if (confirm('确定恢复初始数据？')) { localStorage.clear(); location.reload(); }
+        }
+
+        document.getElementById('journalInput').addEventListener('input', handleJournalInput);
+        saveAndRender();
+    </script>
+</body>
+</html>
