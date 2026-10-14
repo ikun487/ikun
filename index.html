@@ -1,23 +1,23 @@
+
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <!-- 禁用浏览器死锁缓存 -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#4f46e5">
-    <title>习惯与复盘</title>
+    <title>习惯与生活日历</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body { -webkit-tap-highlight-color: transparent; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
         .check-btn { transition: transform 0.15s ease, background-color 0.2s; }
         .check-btn:active { transform: scale(0.82); }
-        .safe-bottom { padding-bottom: calc(5rem + env(safe-area-inset-bottom)); }
+        .safe-bottom { padding-bottom: calc(5.2rem + env(safe-area-inset-bottom)); }
         ::-webkit-scrollbar { display: none; }
     </style>
 </head>
@@ -28,10 +28,10 @@
         <div class="flex justify-between items-center mb-4">
             <div>
                 <h1 class="text-xl font-bold tracking-tight">📅 每日习惯与生活看板</h1>
-                <p class="text-xs text-indigo-200 mt-0.5" id="headerDateText">保持节奏，微小积累</p>
+                <p class="text-xs text-indigo-200 mt-0.5" id="headerDateText">正在同步手机时间...</p>
             </div>
             <div class="flex gap-1.5">
-                <button onclick="forceUpdateApp()" class="text-xs bg-indigo-500/80 active:bg-indigo-700 px-2.5 py-1.5 rounded-xl border border-indigo-400/40" title="获取最新界面">
+                <button onclick="forceUpdateApp()" class="text-xs bg-indigo-500/80 active:bg-indigo-700 px-2.5 py-1.5 rounded-xl border border-indigo-400/40">
                     🔄 刷新
                 </button>
                 <button onclick="openBackupModal()" class="text-xs bg-indigo-500/80 active:bg-indigo-700 px-2.5 py-1.5 rounded-xl border border-indigo-400/40">
@@ -46,22 +46,32 @@
                 <p class="text-base font-bold mt-0.5" id="todayProgress">0/0</p>
             </div>
             <div>
-                <p class="text-[10px] text-indigo-200">本周达成</p>
-                <p class="text-base font-bold text-emerald-300 mt-0.5" id="weekRate">0%</p>
+                <p class="text-[10px] text-indigo-200">本月打卡</p>
+                <p class="text-base font-bold text-emerald-300 mt-0.5"><span id="monthCheckCount">0</span><span class="text-xs font-normal">次</span></p>
             </div>
             <div>
-                <p class="text-[10px] text-indigo-200">本周学习</p>
-                <p class="text-base font-bold text-amber-300 mt-0.5"><span id="weekStudyHours">0</span><span class="text-xs font-normal">h</span></p>
+                <p class="text-[10px] text-indigo-200">本月学习</p>
+                <p class="text-base font-bold text-amber-300 mt-0.5"><span id="monthStudyHours">0</span><span class="text-xs font-normal">h</span></p>
             </div>
             <div>
-                <p class="text-[10px] text-indigo-200">本周复盘</p>
-                <p class="text-base font-bold text-purple-200 mt-0.5"><span id="journalCount">0</span>/7</p>
+                <p class="text-[10px] text-indigo-200">本月复盘</p>
+                <p class="text-base font-bold text-purple-200 mt-0.5"><span id="monthJournalCount">0</span><span class="text-xs font-normal">篇</span></p>
             </div>
         </div>
     </header>
 
     <!-- 主体视图容器 -->
     <main class="p-4 max-w-lg mx-auto">
+
+        <!-- 顶部通用周次导航器 (在打卡/三餐/复盘视图显示) -->
+        <div id="weekNavBar" class="flex items-center justify-between bg-white px-3.5 py-2.5 rounded-2xl shadow-sm border border-slate-100 mb-4">
+            <button onclick="changeWeek(-1)" class="text-xs font-medium text-slate-500 active:text-indigo-600 px-2 py-1 rounded-lg bg-slate-50">◀ 上周</button>
+            <div class="text-center" onclick="resetToCurrentWeek()">
+                <span class="text-xs font-bold text-slate-800" id="weekRangeText">本周</span>
+                <span id="backToTodayBadge" class="hidden ml-1 text-[10px] bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded font-medium">回今天</span>
+            </div>
+            <button onclick="changeWeek(1)" class="text-xs font-medium text-slate-500 active:text-indigo-600 px-2 py-1 rounded-lg bg-slate-50">下周 ▶</button>
+        </div>
 
         <!-- 视图 1：打卡面板 -->
         <section id="tab-habits" class="space-y-4">
@@ -88,35 +98,25 @@
             <!-- 板块 A：今日三餐记录 -->
             <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 space-y-3">
                 <div class="flex justify-between items-center">
-                    <h3 class="text-sm font-bold text-slate-800 flex items-center gap-1.5">
-                        <span>🍱 今日三餐记录</span>
-                    </h3>
+                    <h3 class="text-sm font-bold text-slate-800">🍱 三餐饮食记录</h3>
                     <span class="text-[11px] text-slate-400">输入即自动保存</span>
                 </div>
-
                 <div class="space-y-2.5">
                     <div class="flex items-center bg-amber-50/60 border border-amber-100 rounded-xl px-3 py-2">
                         <span class="text-xs font-bold text-amber-700 w-14 shrink-0">🌅 早餐</span>
-                        <input type="text" id="meal-breakfast" oninput="handleMealInput('breakfast', this.value)" placeholder="今天早上吃了啥？" 
-                            class="w-full text-xs bg-transparent focus:outline-none text-slate-700 select-text">
+                        <input type="text" id="meal-breakfast" oninput="handleMealInput('breakfast', this.value)" placeholder="早上吃了啥？" class="w-full text-xs bg-transparent focus:outline-none text-slate-700 select-text">
                     </div>
-
                     <div class="flex items-center bg-orange-50/60 border border-orange-100 rounded-xl px-3 py-2">
                         <span class="text-xs font-bold text-orange-700 w-14 shrink-0">☀️ 午餐</span>
-                        <input type="text" id="meal-lunch" oninput="handleMealInput('lunch', this.value)" placeholder="中午吃了什么好吃的？" 
-                            class="w-full text-xs bg-transparent focus:outline-none text-slate-700 select-text">
+                        <input type="text" id="meal-lunch" oninput="handleMealInput('lunch', this.value)" placeholder="中午吃了什么好吃的？" class="w-full text-xs bg-transparent focus:outline-none text-slate-700 select-text">
                     </div>
-
                     <div class="flex items-center bg-indigo-50/50 border border-indigo-100 rounded-xl px-3 py-2">
                         <span class="text-xs font-bold text-indigo-700 w-14 shrink-0">🌙 晚餐</span>
-                        <input type="text" id="meal-dinner" oninput="handleMealInput('dinner', this.value)" placeholder="晚饭吃了啥？" 
-                            class="w-full text-xs bg-transparent focus:outline-none text-slate-700 select-text">
+                        <input type="text" id="meal-dinner" oninput="handleMealInput('dinner', this.value)" placeholder="晚饭吃了啥？" class="w-full text-xs bg-transparent focus:outline-none text-slate-700 select-text">
                     </div>
-
                     <div class="flex items-center bg-emerald-50/50 border border-emerald-100 rounded-xl px-3 py-2">
                         <span class="text-xs font-bold text-emerald-700 w-14 shrink-0">🥤 加餐</span>
-                        <input type="text" id="meal-snack" oninput="handleMealInput('snack', this.value)" placeholder="水果 / 奶茶 / 夜宵 / 饮水..." 
-                            class="w-full text-xs bg-transparent focus:outline-none text-slate-700 select-text">
+                        <input type="text" id="meal-snack" oninput="handleMealInput('snack', this.value)" placeholder="水果 / 奶茶 / 夜宵 / 饮水..." class="w-full text-xs bg-transparent focus:outline-none text-slate-700 select-text">
                     </div>
                 </div>
             </div>
@@ -124,28 +124,21 @@
             <!-- 板块 B：今日学习内容记录 -->
             <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 space-y-3">
                 <div class="flex justify-between items-center">
-                    <h3 class="text-sm font-bold text-slate-800 flex items-center gap-1.5">
-                        <span>📚 今日学习记录</span>
-                    </h3>
-                    <span class="text-xs font-semibold text-indigo-600 bg-indigo-50 px-2.5 py-0.5 rounded-full" id="dayStudyTotalBadge">今日累计 0 分钟</span>
+                    <h3 class="text-sm font-bold text-slate-800">📚 学习内容记录</h3>
+                    <span class="text-xs font-semibold text-indigo-600 bg-indigo-50 px-2.5 py-0.5 rounded-full" id="dayStudyTotalBadge">当日累计 0 分钟</span>
                 </div>
 
-                <!-- 快捷科目分类胶囊 -->
                 <div class="flex gap-1.5 overflow-x-auto pb-1">
                     <button onclick="quickFillStudy('嵌入式 / 代码调试')" class="shrink-0 text-[11px] bg-slate-100 active:bg-indigo-100 text-slate-600 px-2.5 py-1 rounded-lg">+ 💻 代码调试</button>
-                    <button onclick="quickFillStudy('英语单词 / 六级听力')" class="shrink-0 text-[11px] bg-slate-100 active:bg-indigo-100 text-slate-600 px-2.5 py-1 rounded-lg">+ 🔤 英语学习</button>
+                    <button onclick="quickFillStudy('英语单词 / 听力训练')" class="shrink-0 text-[11px] bg-slate-100 active:bg-indigo-100 text-slate-600 px-2.5 py-1 rounded-lg">+ 🔤 英语学习</button>
                     <button onclick="quickFillStudy('专业课 / 理论复习')" class="shrink-0 text-[11px] bg-slate-100 active:bg-indigo-100 text-slate-600 px-2.5 py-1 rounded-lg">+ 📖 专业复习</button>
                     <button onclick="quickFillStudy('面试准备 / 刷题总结')" class="shrink-0 text-[11px] bg-slate-100 active:bg-indigo-100 text-slate-600 px-2.5 py-1 rounded-lg">+ 🎯 面试刷题</button>
                 </div>
 
                 <div class="flex gap-1.5">
-                    <input type="text" id="studyTopicInput" placeholder="学了什么具体内容？" 
-                        class="flex-1 px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 select-text">
-                    <input type="number" id="studyTimeInput" placeholder="分钟" value="45"
-                        class="w-16 px-2 py-2 text-xs text-center bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 select-text">
-                    <button onclick="addStudyItem()" class="px-3.5 py-2 bg-indigo-600 active:bg-indigo-700 text-white text-xs font-medium rounded-xl shrink-0">
-                        记录
-                    </button>
+                    <input type="text" id="studyTopicInput" placeholder="学了什么具体内容？" class="flex-1 px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 select-text">
+                    <input type="number" id="studyTimeInput" placeholder="分钟" value="45" class="w-16 px-2 py-2 text-xs text-center bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 select-text">
+                    <button onclick="addStudyItem()" class="px-3.5 py-2 bg-indigo-600 active:bg-indigo-700 text-white text-xs font-medium rounded-xl shrink-0">记录</button>
                 </div>
 
                 <div id="studyListContainer" class="space-y-2 pt-1"></div>
@@ -161,9 +154,7 @@
                     <span id="saveStatus" class="text-xs text-emerald-600 font-medium opacity-0 transition-opacity">✓ 已自动保存</span>
                 </div>
                 <div id="moodSelector" class="grid grid-cols-5 gap-1.5 mb-4"></div>
-                <textarea id="journalInput" rows="6" 
-                    placeholder="记录今天的收获、未完成的原因或随想..."
-                    class="w-full p-3.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 leading-relaxed select-text"></textarea>
+                <textarea id="journalInput" rows="6" placeholder="记录今天的收获、未完成的原因或随想..." class="w-full p-3.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 leading-relaxed select-text"></textarea>
                 <div class="flex justify-between items-center mt-3 text-xs text-slate-400">
                     <div class="flex gap-3">
                         <button onclick="insertTemplate('【今日收获】\n1. \n【改进空间】\n1. ')" class="text-indigo-600 font-medium active:opacity-70">+ 插入复盘模板</button>
@@ -179,26 +170,58 @@
             </div>
         </section>
 
-        <!-- 视图 4：统计图表 -->
+        <!-- 视图 4：全新【月度记录】全景日历板块 -->
+        <section id="tab-month" class="space-y-4 hidden">
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
+                <!-- 月份切换头 -->
+                <div class="flex justify-between items-center mb-4">
+                    <button onclick="changeMonth(-1)" class="px-3 py-1.5 text-xs font-medium bg-slate-100 active:bg-slate-200 rounded-xl text-slate-600">◀ 上月</button>
+                    <div class="text-center" onclick="jumpToCurrentMonth()">
+                        <h3 class="text-base font-bold text-slate-800" id="calendarMonthTitle">2026年 10月</h3>
+                        <p class="text-[10px] text-slate-400">点击任意日期查看当天完整档案</p>
+                    </div>
+                    <button onclick="changeMonth(1)" class="px-3 py-1.5 text-xs font-medium bg-slate-100 active:bg-slate-200 rounded-xl text-slate-600">下月 ▶</button>
+                </div>
+
+                <!-- 星期表头 -->
+                <div class="grid grid-cols-7 gap-1 text-center text-[11px] font-semibold text-slate-400 mb-2">
+                    <div>一</div><div>二</div><div>三</div><div>四</div><div>五</div><div>六</div><div>日</div>
+                </div>
+
+                <!-- 月历网格 -->
+                <div id="monthCalendarGrid" class="grid grid-cols-7 gap-1.5"></div>
+
+                <!-- 图例说明 -->
+                <div class="flex justify-center gap-4 mt-4 pt-3 border-t border-slate-100 text-[10px] text-slate-400">
+                    <span class="flex items-center gap-1"><i class="w-2 h-2 rounded-full bg-indigo-500"></i>已打卡</span>
+                    <span class="flex items-center gap-1"><i class="w-2 h-2 rounded-full bg-amber-500"></i>三餐/学习</span>
+                    <span class="flex items-center gap-1"><i class="w-2 h-2 rounded-full bg-emerald-500"></i>复盘日记</span>
+                </div>
+            </div>
+
+            <!-- 选中日期的全天档案详情卡片 -->
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 space-y-3" id="monthDayDetailCard">
+                <!-- 动态渲染选中日期的完整记录 -->
+            </div>
+        </section>
+
+        <!-- 视图 5：统计图表 -->
         <section id="tab-stats" class="space-y-4 hidden">
             <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
-                <h3 class="text-sm font-bold text-slate-800 mb-1">📊 每日完成趋势</h3>
-                <p class="text-xs text-slate-400 mb-3">周一至周日每天完成的习惯数量</p>
+                <h3 class="text-sm font-bold text-slate-800 mb-1">📊 本周打卡完成趋势</h3>
+                <p class="text-xs text-slate-400 mb-3">所选周每天完成的习惯数量</p>
                 <div class="relative h-44"><canvas id="dailyChart"></canvas></div>
             </div>
             <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
-                <h3 class="text-sm font-bold text-slate-800 mb-1">📚 每日学习时长 (分钟)</h3>
-                <p class="text-xs text-slate-400 mb-3">本周每天投入的学习时间对比</p>
+                <h3 class="text-sm font-bold text-slate-800 mb-1">📚 本周每日学习时长 (分钟)</h3>
+                <p class="text-xs text-slate-400 mb-3">所选周每天投入的学习时间对比</p>
                 <div class="relative h-44"><canvas id="studyChart"></canvas></div>
             </div>
             <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
-                <h3 class="text-sm font-bold text-slate-800 mb-1">🔥 连续打卡排行</h3>
-                <p class="text-xs text-slate-400 mb-3">各项习惯当前连击天数</p>
+                <h3 class="text-sm font-bold text-slate-800 mb-1">🔥 习惯累计总打卡次数</h3>
+                <p class="text-xs text-slate-400 mb-3">各项习惯在日历中的历史总达成天数</p>
                 <div class="relative h-44"><canvas id="streakChart"></canvas></div>
             </div>
-            <button onclick="resetData()" class="w-full py-3 text-xs text-red-500 bg-white rounded-2xl border border-red-100 active:bg-red-50">
-                恢复初始演示数据
-            </button>
         </section>
     </main>
 
@@ -209,7 +232,7 @@
                 <h3 class="font-bold text-slate-800">数据备份与恢复</h3>
                 <button onclick="closeBackupModal()" class="text-slate-400 px-2">✕</button>
             </div>
-            <p class="text-xs text-slate-500">复制下方代码可备份到微信或备忘录；粘贴之前的代码点击恢复即可导入。</p>
+            <p class="text-xs text-slate-500">复制下方代码可备份所有月份的记录到微信或备忘录；粘贴之前的代码点击恢复即可导入。</p>
             <textarea id="backupText" rows="4" class="w-full p-2.5 text-xs bg-slate-50 border rounded-xl font-mono select-text"></textarea>
             <div class="flex gap-2">
                 <button onclick="copyBackup()" class="flex-1 py-2.5 bg-indigo-600 text-white text-xs font-medium rounded-xl">复制备份数据</button>
@@ -218,28 +241,31 @@
         </div>
     </div>
 
-    <!-- 底部 4 栏导航栏 -->
+    <!-- 底部 5 栏导航栏 -->
     <nav class="fixed bottom-0 inset-x-0 bg-white border-t border-slate-200/80 flex justify-around py-2 z-30" style="padding-bottom: calc(0.5rem + env(safe-area-inset-bottom));">
-        <button onclick="switchTab('habits')" id="nav-habits" class="flex flex-col items-center w-16 text-indigo-600">
-            <span class="text-lg">✅</span>
-            <span class="text-[10px] font-medium mt-0.5">今日打卡</span>
+        <button onclick="switchTab('habits')" id="nav-habits" class="flex flex-col items-center w-14 text-indigo-600">
+            <span class="text-base">✅</span>
+            <span class="text-[10px] font-medium mt-0.5">打卡</span>
         </button>
-        <button onclick="switchTab('daily')" id="nav-daily" class="flex flex-col items-center w-16 text-slate-400">
-            <span class="text-lg">🍱</span>
-            <span class="text-[10px] font-medium mt-0.5">三餐与学习</span>
+        <button onclick="switchTab('daily')" id="nav-daily" class="flex flex-col items-center w-14 text-slate-400">
+            <span class="text-base">🍱</span>
+            <span class="text-[10px] font-medium mt-0.5">三餐学习</span>
         </button>
-        <button onclick="switchTab('journal')" id="nav-journal" class="flex flex-col items-center w-16 text-slate-400">
-            <span class="text-lg">📖</span>
-            <span class="text-[10px] font-medium mt-0.5">每日复盘</span>
+        <button onclick="switchTab('journal')" id="nav-journal" class="flex flex-col items-center w-14 text-slate-400">
+            <span class="text-base">📖</span>
+            <span class="text-[10px] font-medium mt-0.5">复盘</span>
         </button>
-        <button onclick="switchTab('stats')" id="nav-stats" class="flex flex-col items-center w-16 text-slate-400">
-            <span class="text-lg">📊</span>
-            <span class="text-[10px] font-medium mt-0.5">趋势图表</span>
+        <button onclick="switchTab('month')" id="nav-month" class="flex flex-col items-center w-14 text-slate-400">
+            <span class="text-base">🗓️</span>
+            <span class="text-[10px] font-medium mt-0.5">月度记录</span>
+        </button>
+        <button onclick="switchTab('stats')" id="nav-stats" class="flex flex-col items-center w-14 text-slate-400">
+            <span class="text-base">📊</span>
+            <span class="text-[10px] font-medium mt-0.5">图表</span>
         </button>
     </nav>
 
     <script>
-        // 一键破除缓存强制刷新函数
         function forceUpdateApp() {
             const baseUrl = window.location.href.split('?')[0];
             window.location.replace(baseUrl + '?t=' + new Date().getTime());
@@ -254,111 +280,233 @@
             { emoji: '🔋', label: '疲惫' },
             { emoji: '🌧️', label: '低迷' }
         ];
+
+        // --- 真实手机日期工具函数 ---
+        function formatDateKey(date) {
+            const y = date.getFullYear();
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            const d = String(date.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        }
+
+        function parseDateKey(dateKey) {
+            const [y, m, d] = dateKey.split('-').map(Number);
+            return new Date(y, m - 1, d);
+        }
+
+        function getMondayOfDate(date) {
+            const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+            const day = d.getDay();
+            const diff = day === 0 ? -6 : 1 - day;
+            d.setDate(d.getDate() + diff);
+            return d;
+        }
+
+        function getWeekDatesByOffset(weekOffset) {
+            const monday = getMondayOfDate(new Date());
+            monday.setDate(monday.getDate() + weekOffset * 7);
+            return Array.from({ length: 7 }, (_, i) => {
+                const d = new Date(monday);
+                d.setDate(monday.getDate() + i);
+                return d;
+            });
+        }
+
+        const todayRealDate = new Date();
+        const todayDateKey = formatDateKey(todayRealDate);
+        let currentWeekOffset = 0;
+        let selectedDateKey = todayDateKey;
+        let calendarYear = todayRealDate.getFullYear();
+        let calendarMonth = todayRealDate.getMonth(); // 0-11
+        let activeTab = 'habits';
+
+        // --- 数据加载与旧版平滑迁移 ---
         const defaultHabits = [
-            { id: 1, name: '代码提交与技术复盘', checks: [true, true, true, false, true, false, false] },
-            { id: 2, name: '英语阅读 / 听力训练', checks: [true, true, true, true, false, false, false] },
-            { id: 3, name: '有氧运动 / 核心训练', checks: [false, true, false, true, true, false, false] },
-            { id: 4, name: '23:30前放下手机早睡', checks: [true, false, true, true, true, false, false] }
+            { id: 1, name: '代码提交与技术复盘' },
+            { id: 2, name: '英语阅读 / 听力训练' },
+            { id: 3, name: '有氧运动 / 核心训练' },
+            { id: 4, name: '23:30前放下手机早睡' }
         ];
-        const defaultJournals = {
-            0: { mood: '🚀', text: '【今日收获】\n顺利完成了核心模块的调试，晚上抽空背了单词。' },
-            1: { mood: '😊', text: '四项习惯全部达成！运动之后睡眠质量明显提升。' },
-            2: { mood: '', text: '' }, 3: { mood: '', text: '' }, 4: { mood: '', text: '' }, 5: { mood: '', text: '' }, 6: { mood: '', text: '' }
-        };
-        const defaultDailyLogs = {
-            0: {
-                meals: { breakfast: '包子 + 豆浆', lunch: '食堂两荤一素', dinner: '牛肉面', snack: '苹果一个' },
-                studies: [
-                    { id: 101, topic: 'FreeRTOS 任务调度源码复盘', duration: 60 },
-                    { id: 102, topic: '六级真题阅读 2 篇', duration: 40 }
-                ]
-            },
-            1: {
-                meals: { breakfast: '鸡蛋灌饼 + 牛奶', lunch: '黄焖鸡米饭', dinner: '清淡粥配小菜', snack: '美式咖啡' },
-                studies: [
-                    { id: 103, topic: '整理工艺与嵌入式面试核心问题', duration: 50 }
-                ]
+
+        let habits = JSON.parse(localStorage.getItem('habits_v2_list')) || null;
+        // recordsByDate 结构: { "YYYY-MM-DD": { checks: { habitId: true }, meals: {...}, studies: [...], journal: { mood, text } } }
+        let recordsByDate = JSON.parse(localStorage.getItem('records_by_date_v2')) || {};
+
+        // 如果首次升级，自动把旧版数据迁移到本周真实日期下
+        if (!habits) {
+            const oldHabits = JSON.parse(localStorage.getItem('habits_data'));
+            const oldJournals = JSON.parse(localStorage.getItem('journals_data')) || {};
+            const oldDailyLogs = JSON.parse(localStorage.getItem('daily_logs_data')) || {};
+            const currentWeekDates = getWeekDatesByOffset(0);
+
+            if (oldHabits && Array.isArray(oldHabits)) {
+                habits = oldHabits.map(h => ({ id: h.id, name: h.name }));
+                currentWeekDates.forEach((dateObj, idx) => {
+                    const key = formatDateKey(dateObj);
+                    if (!recordsByDate[key]) recordsByDate[key] = { checks: {}, meals: {}, studies: [], journal: { mood: '', text: '' } };
+                    oldHabits.forEach(h => {
+                        if (h.checks && h.checks[idx]) recordsByDate[key].checks[h.id] = true;
+                    });
+                    if (oldJournals[idx]) recordsByDate[key].journal = oldJournals[idx];
+                    if (oldDailyLogs[idx]) {
+                        recordsByDate[key].meals = oldDailyLogs[idx].meals || {};
+                        recordsByDate[key].studies = oldDailyLogs[idx].studies || [];
+                    }
+                });
+            } else {
+                habits = defaultHabits;
             }
-        };
+            localStorage.setItem('habits_v2_list', JSON.stringify(habits));
+            localStorage.setItem('records_by_date_v2', JSON.stringify(recordsByDate));
+        }
 
-        let habits = JSON.parse(localStorage.getItem('habits_data')) || defaultHabits;
-        let journals = JSON.parse(localStorage.getItem('journals_data')) || defaultJournals;
-        let dailyLogs = JSON.parse(localStorage.getItem('daily_logs_data')) || defaultDailyLogs;
+        function ensureDateRecord(dateKey) {
+            if (!recordsByDate[dateKey]) {
+                recordsByDate[dateKey] = {
+                    checks: {},
+                    meals: { breakfast: '', lunch: '', dinner: '', snack: '' },
+                    studies: [],
+                    journal: { mood: '', text: '' }
+                };
+            }
+            if (!recordsByDate[dateKey].checks) recordsByDate[dateKey].checks = {};
+            if (!recordsByDate[dateKey].meals) recordsByDate[dateKey].meals = { breakfast: '', lunch: '', dinner: '', snack: '' };
+            if (!recordsByDate[dateKey].studies) recordsByDate[dateKey].studies = [];
+            if (!recordsByDate[dateKey].journal) recordsByDate[dateKey].journal = { mood: '', text: '' };
+            return recordsByDate[dateKey];
+        }
 
-        function getTodayIndex() { const day = new Date().getDay(); return day === 0 ? 6 : day - 1; }
-        let selectedDayIdx = getTodayIndex();
         let dailyChartInstance = null, streakChartInstance = null, studyChartInstance = null;
         let saveTimeout = null, dailySaveTimeout = null;
 
-        document.getElementById('headerDateText').innerText = `今天是 ${DAYS[getTodayIndex()]} · 记录三餐与成长`;
+        // 初始化顶部真实手机日期文字
+        function updateHeaderRealDate() {
+            const now = new Date();
+            const weekDayName = DAYS[now.getDay() === 0 ? 6 : now.getDay() - 1];
+            document.getElementById('headerDateText').innerText = `${now.getFullYear()}年${now.getMonth() + 1}月${now.getDate()}日 ${weekDayName} · 与手机时间同步`;
+        }
+        updateHeaderRealDate();
 
-        function ensureDailyLog(idx) {
-            if (!dailyLogs[idx]) {
-                dailyLogs[idx] = { meals: { breakfast: '', lunch: '', dinner: '', snack: '' }, studies: [] };
+        // 计算某习惯截至目前的连续打卡天数
+        function calculateRealStreak(habitId) {
+            let streak = 0;
+            let d = new Date();
+            const todayKey = formatDateKey(d);
+            // 如果今天还没打，从昨天开始往前看是否连续
+            if (!(recordsByDate[todayKey] && recordsByDate[todayKey].checks && recordsByDate[todayKey].checks[habitId])) {
+                d.setDate(d.getDate() - 1);
             }
-            if (!dailyLogs[idx].meals) dailyLogs[idx].meals = { breakfast: '', lunch: '', dinner: '', snack: '' };
-            if (!dailyLogs[idx].studies) dailyLogs[idx].studies = [];
-        }
-
-        function switchTab(tab) {
-            ['habits', 'daily', 'journal', 'stats'].forEach(t => {
-                document.getElementById(`tab-${t}`).classList.toggle('hidden', t !== tab);
-                const nav = document.getElementById(`nav-${t}`);
-                nav.className = `flex flex-col items-center w-16 ${t === tab ? 'text-indigo-600' : 'text-slate-400'}`;
-            });
-            if (tab === 'stats') updateCharts();
-        }
-
-        function calculateStreak(checks) {
-            let streak = 0, lastTrue = checks.lastIndexOf(true);
-            if (lastTrue === -1) return 0;
-            for (let i = lastTrue; i >= 0; i--) { if (checks[i]) streak++; else break; }
+            for (let i = 0; i < 365; i++) {
+                const k = formatDateKey(d);
+                if (recordsByDate[k] && recordsByDate[k].checks && recordsByDate[k].checks[habitId]) {
+                    streak++;
+                    d.setDate(d.getDate() - 1);
+                } else {
+                    break;
+                }
+            }
             return streak;
         }
 
+        function calculateTotalHabitChecks(habitId) {
+            return Object.values(recordsByDate).filter(r => r.checks && r.checks[habitId]).length;
+        }
+
+        function switchTab(tab) {
+            activeTab = tab;
+            ['habits', 'daily', 'journal', 'month', 'stats'].forEach(t => {
+                document.getElementById(`tab-${t}`).classList.toggle('hidden', t !== tab);
+                const nav = document.getElementById(`nav-${t}`);
+                nav.className = `flex flex-col items-center w-14 ${t === tab ? 'text-indigo-600' : 'text-slate-400'}`;
+            });
+            // 月度视图隐藏周导航条
+            document.getElementById('weekNavBar').classList.toggle('hidden', tab === 'month');
+            if (tab === 'month') renderMonthCalendar();
+            if (tab === 'stats') updateCharts();
+        }
+
+        function changeWeek(delta) {
+            currentWeekOffset += delta;
+            const weekDates = getWeekDatesByOffset(currentWeekOffset);
+            const weekKeys = weekDates.map(formatDateKey);
+            if (!weekKeys.includes(selectedDateKey)) {
+                selectedDateKey = currentWeekOffset === 0 ? todayDateKey : weekKeys[0];
+            }
+            saveAndRender();
+            if (activeTab === 'stats') updateCharts();
+        }
+
+        function resetToCurrentWeek() {
+            currentWeekOffset = 0;
+            selectedDateKey = todayDateKey;
+            saveAndRender();
+            if (activeTab === 'stats') updateCharts();
+        }
+
+        function updateWeekNavBar() {
+            const weekDates = getWeekDatesByOffset(currentWeekOffset);
+            const start = weekDates[0], end = weekDates[6];
+            const rangeStr = `${start.getMonth() + 1}月${start.getDate()}日 - ${end.getMonth() + 1}月${end.getDate()}日`;
+            const prefix = currentWeekOffset === 0 ? '本周 · ' : (currentWeekOffset === -1 ? '上周 · ' : (currentWeekOffset === 1 ? '下周 · ' : ''));
+            document.getElementById('weekRangeText').innerText = prefix + rangeStr;
+            document.getElementById('backToTodayBadge').classList.toggle('hidden', currentWeekOffset === 0);
+        }
+
         function saveAndRender() {
-            localStorage.setItem('habits_data', JSON.stringify(habits));
-            localStorage.setItem('journals_data', JSON.stringify(journals));
-            localStorage.setItem('daily_logs_data', JSON.stringify(dailyLogs));
+            localStorage.setItem('habits_v2_list', JSON.stringify(habits));
+            localStorage.setItem('records_by_date_v2', JSON.stringify(recordsByDate));
+            updateWeekNavBar();
             renderMobileHabits();
             renderDailySection();
             renderJournalSection();
             renderTimeline();
             updateMetrics();
+            if (activeTab === 'month') renderMonthCalendar();
         }
 
-        function toggleCheck(habitId, dayIndex) {
-            const habit = habits.find(h => h.id === habitId);
-            if (habit) { habit.checks[dayIndex] = !habit.checks[dayIndex]; saveAndRender(); }
+        // --- 打卡面板（带真实几号显示） ---
+        function toggleCheckByDate(habitId, dateKey) {
+            const rec = ensureDateRecord(dateKey);
+            rec.checks[habitId] = !rec.checks[habitId];
+            saveAndRender();
         }
 
         function addHabit() {
             const input = document.getElementById('habitInput');
             const name = input.value.trim();
             if (!name) return;
-            habits.push({ id: Date.now(), name, checks: [false, false, false, false, false, false, false] });
-            input.value = ''; saveAndRender();
+            habits.push({ id: Date.now(), name });
+            input.value = '';
+            saveAndRender();
         }
 
         function deleteHabit(id) {
             if (!confirm('删除这个习惯？')) return;
-            habits = habits.filter(h => h.id !== id); saveAndRender();
+            habits = habits.filter(h => h.id !== id);
+            saveAndRender();
         }
 
         function renderMobileHabits() {
             const container = document.getElementById('habitMobileList');
-            const todayIdx = getTodayIndex();
+            const weekDates = getWeekDatesByOffset(currentWeekOffset);
+
             container.innerHTML = habits.map(habit => {
-                const streak = calculateStreak(habit.checks);
-                const daysHtml = habit.checks.map((checked, idx) => {
-                    const isToday = idx === todayIdx;
+                const streak = calculateRealStreak(habit.id);
+                const daysHtml = weekDates.map((dateObj, idx) => {
+                    const key = formatDateKey(dateObj);
+                    const isToday = key === todayDateKey;
+                    const checked = !!(recordsByDate[key] && recordsByDate[key].checks && recordsByDate[key].checks[habit.id]);
+                    const dayNum = dateObj.getDate();
+
                     const btnStyle = checked 
                         ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm' 
-                        : (isToday ? 'bg-indigo-50 border-indigo-400 text-indigo-600' : 'bg-slate-50 border-slate-200 text-slate-400');
+                        : (isToday ? 'bg-indigo-50 border-indigo-400 text-indigo-600 font-bold' : 'bg-slate-50 border-slate-200 text-slate-500');
+
                     return `
-                        <button onclick="toggleCheck(${habit.id}, ${idx})" class="check-btn flex flex-col items-center justify-center py-2 rounded-xl border ${btnStyle}">
-                            <span class="text-[10px] opacity-80">${SHORT_DAYS[idx]}</span>
-                            <span class="text-xs font-bold mt-0.5">${checked ? '✓' : '·'}</span>
+                        <button onclick="toggleCheckByDate(${habit.id}, '${key}')" class="check-btn flex flex-col items-center justify-center py-1.5 rounded-xl border ${btnStyle}">
+                            <span class="text-[9px] opacity-75">${SHORT_DAYS[idx]}</span>
+                            <span class="text-[11px] font-bold leading-tight my-0.5">${dayNum}</span>
+                            <span class="text-[10px] leading-none">${checked ? '✓' : '·'}</span>
                         </button>
                     `;
                 }).join('');
@@ -368,7 +516,7 @@
                         <div class="flex justify-between items-center mb-3">
                             <span class="font-bold text-sm text-slate-800">${habit.name}</span>
                             <div class="flex items-center gap-2">
-                                <span class="text-xs px-2 py-0.5 rounded-full font-semibold ${streak > 0 ? 'bg-amber-50 text-amber-600' : 'bg-slate-100 text-slate-400'}">🔥 ${streak}天</span>
+                                <span class="text-xs px-2 py-0.5 rounded-full font-semibold ${streak > 0 ? 'bg-amber-50 text-amber-600' : 'bg-slate-100 text-slate-400'}">🔥 连击 ${streak}天</span>
                                 <button onclick="deleteHabit(${habit.id})" class="text-slate-300 px-1">✕</button>
                             </div>
                         </div>
@@ -378,46 +526,60 @@
             }).join('');
         }
 
-        function selectDay(idx) {
-            selectedDayIdx = idx;
+        // --- 三餐与学习逻辑 ---
+        function selectDateKey(key) {
+            selectedDateKey = key;
             renderDailySection();
             renderJournalSection();
+            if (activeTab === 'month') renderMonthCalendar();
         }
 
-        function hasDailyData(idx) {
-            const d = dailyLogs[idx];
+        function hasDailyData(key) {
+            const d = recordsByDate[key];
             if (!d) return false;
             const hasMeal = Object.values(d.meals || {}).some(v => v && v.trim().length > 0);
             const hasStudy = (d.studies || []).length > 0;
             return hasMeal || hasStudy;
         }
 
+        function hasJournalData(key) {
+            const d = recordsByDate[key];
+            return !!(d && d.journal && (d.journal.text.trim().length > 0 || d.journal.mood));
+        }
+
+        function hasCheckData(key) {
+            const d = recordsByDate[key];
+            return !!(d && d.checks && Object.values(d.checks).some(Boolean));
+        }
+
         function renderDailySection() {
-            const todayIdx = getTodayIndex();
-            ensureDailyLog(selectedDayIdx);
-            const currentLog = dailyLogs[selectedDayIdx];
+            const weekDates = getWeekDatesByOffset(currentWeekOffset);
+            const currentRec = ensureDateRecord(selectedDateKey);
+            const selDateObj = parseDateKey(selectedDateKey);
+            const weekIdx = selDateObj.getDay() === 0 ? 6 : selDateObj.getDay() - 1;
 
-            document.getElementById('dailySectionDayBadge').innerText = `${DAYS[selectedDayIdx]} ${selectedDayIdx === todayIdx ? '(今天)' : ''} · 三餐与学习`;
+            document.getElementById('dailySectionDayBadge').innerText = `${selDateObj.getMonth() + 1}月${selDateObj.getDate()}日 ${DAYS[weekIdx]} ${selectedDateKey === todayDateKey ? '(今天)' : ''}`;
 
-            document.getElementById('dailyDaySelector').innerHTML = SHORT_DAYS.map((day, idx) => {
-                const isSelected = idx === selectedDayIdx;
-                const hasData = hasDailyData(idx);
-                return `<button onclick="selectDay(${idx})" class="relative py-1.5 text-xs rounded-lg font-medium ${isSelected ? 'bg-white text-indigo-600 shadow-sm font-bold' : 'text-slate-500'}">${day}${hasData ? '<span class="absolute top-1 right-1 w-1.5 h-1.5 bg-amber-500 rounded-full"></span>' : ''}</button>`;
+            document.getElementById('dailyDaySelector').innerHTML = weekDates.map((dObj, idx) => {
+                const k = formatDateKey(dObj);
+                const isSelected = k === selectedDateKey;
+                const hasData = hasDailyData(k);
+                return `<button onclick="selectDateKey('${k}')" class="relative py-1.5 flex flex-col items-center rounded-lg font-medium ${isSelected ? 'bg-white text-indigo-600 shadow-sm font-bold' : 'text-slate-500'}"><span class="text-[10px]">${SHORT_DAYS[idx]}</span><span class="text-xs">${dObj.getDate()}</span>${hasData ? '<span class="absolute top-1 right-1 w-1.5 h-1.5 bg-amber-500 rounded-full"></span>' : ''}</button>`;
             }).join('');
 
-            document.getElementById('meal-breakfast').value = currentLog.meals.breakfast || '';
-            document.getElementById('meal-lunch').value = currentLog.meals.lunch || '';
-            document.getElementById('meal-dinner').value = currentLog.meals.dinner || '';
-            document.getElementById('meal-snack').value = currentLog.meals.snack || '';
+            document.getElementById('meal-breakfast').value = currentRec.meals.breakfast || '';
+            document.getElementById('meal-lunch').value = currentRec.meals.lunch || '';
+            document.getElementById('meal-dinner').value = currentRec.meals.dinner || '';
+            document.getElementById('meal-snack').value = currentRec.meals.snack || '';
 
-            const totalMins = currentLog.studies.reduce((sum, item) => sum + (Number(item.duration) || 0), 0);
-            document.getElementById('dayStudyTotalBadge').innerText = `今日累计 ${totalMins} 分钟`;
+            const totalMins = currentRec.studies.reduce((sum, item) => sum + (Number(item.duration) || 0), 0);
+            document.getElementById('dayStudyTotalBadge').innerText = `当日累计 ${totalMins} 分钟`;
 
             const listEl = document.getElementById('studyListContainer');
-            if (currentLog.studies.length === 0) {
-                listEl.innerHTML = `<p class="text-xs text-slate-400 text-center py-4 bg-slate-50/60 rounded-xl border border-dashed border-slate-200">今天还没有记录学习内容，在上方添加第一条吧！</p>`;
+            if (currentRec.studies.length === 0) {
+                listEl.innerHTML = `<p class="text-xs text-slate-400 text-center py-4 bg-slate-50/60 rounded-xl border border-dashed border-slate-200">该日还没有学习记录，在上方添加第一条吧！</p>`;
             } else {
-                listEl.innerHTML = currentLog.studies.map(item => `
+                listEl.innerHTML = currentRec.studies.map(item => `
                     <div class="flex justify-between items-center bg-slate-50 px-3.5 py-2.5 rounded-xl border border-slate-100">
                         <div class="flex items-center gap-2 pr-2">
                             <span class="w-2 h-2 rounded-full bg-indigo-500 shrink-0"></span>
@@ -433,20 +595,10 @@
         }
 
         function handleMealInput(mealType, value) {
-            ensureDailyLog(selectedDayIdx);
-            dailyLogs[selectedDayIdx].meals[mealType] = value;
-            localStorage.setItem('daily_logs_data', JSON.stringify(dailyLogs));
+            const rec = ensureDateRecord(selectedDateKey);
+            rec.meals[mealType] = value;
+            localStorage.setItem('records_by_date_v2', JSON.stringify(recordsByDate));
             showDailySaveIndicator();
-            const buttons = document.getElementById('dailyDaySelector').children;
-            if (buttons[selectedDayIdx]) {
-                const hasData = hasDailyData(selectedDayIdx);
-                const dot = buttons[selectedDayIdx].querySelector('span.rounded-full');
-                if (hasData && !dot) {
-                    buttons[selectedDayIdx].insertAdjacentHTML('beforeend', '<span class="absolute top-1 right-1 w-1.5 h-1.5 bg-amber-500 rounded-full"></span>');
-                } else if (!hasData && dot) {
-                    dot.remove();
-                }
-            }
         }
 
         function quickFillStudy(text) {
@@ -462,16 +614,16 @@
             const duration = parseInt(timeInput.value, 10) || 30;
             if (!topic) return;
 
-            ensureDailyLog(selectedDayIdx);
-            dailyLogs[selectedDayIdx].studies.push({ id: Date.now(), topic, duration });
+            const rec = ensureDateRecord(selectedDateKey);
+            rec.studies.push({ id: Date.now(), topic, duration });
             topicInput.value = '';
             showDailySaveIndicator();
             saveAndRender();
         }
 
         function deleteStudyItem(id) {
-            ensureDailyLog(selectedDayIdx);
-            dailyLogs[selectedDayIdx].studies = dailyLogs[selectedDayIdx].studies.filter(s => s.id !== id);
+            const rec = ensureDateRecord(selectedDateKey);
+            rec.studies = rec.studies.filter(s => s.id !== id);
             saveAndRender();
         }
 
@@ -482,30 +634,37 @@
             dailySaveTimeout = setTimeout(() => status.classList.add('opacity-0'), 1500);
         }
 
+        // --- 复盘日记逻辑 ---
         function renderJournalSection() {
-            const todayIdx = getTodayIndex();
-            const currentData = journals[selectedDayIdx] || { mood: '', text: '' };
-            document.getElementById('currentJournalDayBadge').innerText = `${DAYS[selectedDayIdx]} ${selectedDayIdx === todayIdx ? '(今天)' : ''} 状态`;
-            document.getElementById('daySelectorGroup').innerHTML = SHORT_DAYS.map((day, idx) => {
-                const isSelected = idx === selectedDayIdx;
-                const hasContent = journals[idx] && journals[idx].text.trim().length > 0;
-                return `<button onclick="selectDay(${idx})" class="relative py-1.5 text-xs rounded-lg font-medium ${isSelected ? 'bg-white text-indigo-600 shadow-sm font-bold' : 'text-slate-500'}">${day}${hasContent ? '<span class="absolute top-1 right-1 w-1.5 h-1.5 bg-emerald-500 rounded-full"></span>' : ''}</button>`;
+            const weekDates = getWeekDatesByOffset(currentWeekOffset);
+            const currentRec = ensureDateRecord(selectedDateKey);
+            const selDateObj = parseDateKey(selectedDateKey);
+            const weekIdx = selDateObj.getDay() === 0 ? 6 : selDateObj.getDay() - 1;
+
+            document.getElementById('currentJournalDayBadge').innerText = `${selDateObj.getMonth() + 1}月${selDateObj.getDate()}日 ${DAYS[weekIdx]} ${selectedDateKey === todayDateKey ? '(今天)' : ''}`;
+
+            document.getElementById('daySelectorGroup').innerHTML = weekDates.map((dObj, idx) => {
+                const k = formatDateKey(dObj);
+                const isSelected = k === selectedDateKey;
+                const hasContent = hasJournalData(k);
+                return `<button onclick="selectDateKey('${k}')" class="relative py-1.5 flex flex-col items-center rounded-lg font-medium ${isSelected ? 'bg-white text-indigo-600 shadow-sm font-bold' : 'text-slate-500'}"><span class="text-[10px]">${SHORT_DAYS[idx]}</span><span class="text-xs">${dObj.getDate()}</span>${hasContent ? '<span class="absolute top-1 right-1 w-1.5 h-1.5 bg-emerald-500 rounded-full"></span>' : ''}</button>`;
             }).join('');
 
             document.getElementById('moodSelector').innerHTML = MOODS.map(m => {
-                const active = currentData.mood === m.emoji;
+                const active = currentRec.journal.mood === m.emoji;
                 return `<button onclick="selectMood('${m.emoji}')" class="py-1.5 rounded-xl border text-xs flex flex-col items-center ${active ? 'bg-indigo-50 border-indigo-400 text-indigo-700 font-bold' : 'border-slate-200 text-slate-600'}"><span class="text-base">${m.emoji}</span><span class="text-[10px] mt-0.5">${m.label}</span></button>`;
             }).join('');
 
             const textarea = document.getElementById('journalInput');
-            textarea.value = currentData.text;
-            document.getElementById('charCount').innerText = `${currentData.text.length} 字`;
+            textarea.value = currentRec.journal.text || '';
+            document.getElementById('charCount').innerText = `${(currentRec.journal.text || '').length} 字`;
         }
 
         function selectMood(emoji) {
-            if (!journals[selectedDayIdx]) journals[selectedDayIdx] = { mood: '', text: '' };
-            journals[selectedDayIdx].mood = journals[selectedDayIdx].mood === emoji ? '' : emoji;
-            showSaveIndicator(); saveAndRender();
+            const rec = ensureDateRecord(selectedDateKey);
+            rec.journal.mood = rec.journal.mood === emoji ? '' : emoji;
+            showSaveIndicator();
+            saveAndRender();
         }
 
         function insertTemplate(tpl) {
@@ -515,16 +674,21 @@
         }
 
         function clearCurrentJournal() {
-            journals[selectedDayIdx] = { mood: '', text: '' }; showSaveIndicator(); saveAndRender();
+            const rec = ensureDateRecord(selectedDateKey);
+            rec.journal = { mood: '', text: '' };
+            showSaveIndicator();
+            saveAndRender();
         }
 
         function handleJournalInput() {
             const text = document.getElementById('journalInput').value;
-            if (!journals[selectedDayIdx]) journals[selectedDayIdx] = { mood: '', text: '' };
-            journals[selectedDayIdx].text = text;
+            const rec = ensureDateRecord(selectedDateKey);
+            rec.journal.text = text;
             document.getElementById('charCount').innerText = `${text.length} 字`;
-            localStorage.setItem('journals_data', JSON.stringify(journals));
-            showSaveIndicator(); renderTimeline(); updateMetrics();
+            localStorage.setItem('records_by_date_v2', JSON.stringify(recordsByDate));
+            showSaveIndicator();
+            renderTimeline();
+            updateMetrics();
         }
 
         function showSaveIndicator() {
@@ -536,86 +700,242 @@
 
         function renderTimeline() {
             const container = document.getElementById('journalTimeline');
-            const entries = DAYS.map((dayName, idx) => ({ idx, dayName, ...(journals[idx] || { mood: '', text: '' }) })).filter(i => i.text.trim() || i.mood);
+            const weekDates = getWeekDatesByOffset(currentWeekOffset);
+            const entries = weekDates.map((dObj, idx) => {
+                const key = formatDateKey(dObj);
+                const rec = recordsByDate[key];
+                return { key, dObj, dayName: DAYS[idx], journal: rec ? rec.journal : null, checks: rec ? rec.checks : {} };
+            }).filter(i => i.journal && (i.journal.text.trim() || i.journal.mood));
+
             if (!entries.length) {
-                container.innerHTML = '<p class="text-xs text-slate-400 text-center py-4">本周暂无记录</p>'; return;
+                container.innerHTML = '<p class="text-xs text-slate-400 text-center py-4">所选周暂无复盘记录</p>';
+                return;
             }
-            container.innerHTML = entries.map(item => `
-                <div onclick="selectDay(${item.idx})" class="p-3 rounded-xl bg-slate-50 border border-slate-100 active:bg-indigo-50">
-                    <div class="flex justify-between text-xs font-bold text-slate-700 mb-1">
-                        <span>${item.dayName} ${item.mood || ''}</span>
-                        <span class="text-slate-400 font-normal">达成 ${habits.filter(h => h.checks[item.idx]).length}/${habits.length}</span>
+            container.innerHTML = entries.map(item => {
+                const doneCount = habits.filter(h => item.checks && item.checks[h.id]).length;
+                return `
+                    <div onclick="selectDateKey('${item.key}')" class="p-3 rounded-xl bg-slate-50 border border-slate-100 active:bg-indigo-50">
+                        <div class="flex justify-between text-xs font-bold text-slate-700 mb-1">
+                            <span>${item.dObj.getMonth() + 1}月${item.dObj.getDate()}日 ${item.dayName} ${item.journal.mood || ''}</span>
+                            <span class="text-slate-400 font-normal">打卡 ${doneCount}/${habits.length}</span>
+                        </div>
+                        <p class="text-xs text-slate-600 line-clamp-2 whitespace-pre-line">${item.journal.text || '（仅记录状态）'}</p>
                     </div>
-                    <p class="text-xs text-slate-600 line-clamp-2 whitespace-pre-line">${item.text || '（仅记录状态）'}</p>
-                </div>
-            `).join('');
+                `;
+            }).join('');
         }
 
-        function updateMetrics() {
-            const todayIdx = getTodayIndex(), total = habits.length;
-            const todayDone = habits.filter(h => h.checks[todayIdx]).length;
-            document.getElementById('todayProgress').innerText = `${todayDone}/${total}`;
-            const totalChecked = habits.reduce((s, h) => s + h.checks.filter(Boolean).length, 0);
-            document.getElementById('weekRate').innerText = `${total ? Math.round((totalChecked / (total * 7)) * 100) : 0}%`;
-            
-            let totalWeekMins = 0;
-            for (let i = 0; i < 7; i++) {
-                if (dailyLogs[i] && dailyLogs[i].studies) {
-                    totalWeekMins += dailyLogs[i].studies.reduce((sum, s) => sum + (Number(s.duration) || 0), 0);
-                }
+        // --- 全新【月度记录】全景日历渲染 ---
+        function changeMonth(delta) {
+            calendarMonth += delta;
+            if (calendarMonth < 0) { calendarMonth = 11; calendarYear--; }
+            if (calendarMonth > 11) { calendarMonth = 0; calendarYear++; }
+            renderMonthCalendar();
+        }
+
+        function jumpToCurrentMonth() {
+            const now = new Date();
+            calendarYear = now.getFullYear();
+            calendarMonth = now.getMonth();
+            selectedDateKey = todayDateKey;
+            renderMonthCalendar();
+        }
+
+        function renderMonthCalendar() {
+            document.getElementById('calendarMonthTitle').innerText = `${calendarYear}年 ${calendarMonth + 1}月`;
+            const grid = document.getElementById('monthCalendarGrid');
+
+            const firstDay = new Date(calendarYear, calendarMonth, 1);
+            const daysInMonth = new Date(calendarYear, calendarMonth + 1, 0).getDate();
+            const startOffset = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1; // 周一为0
+
+            let html = '';
+            for (let i = 0; i < startOffset; i++) {
+                html += `<div class="h-12 rounded-xl bg-slate-50/40"></div>`;
             }
-            document.getElementById('weekStudyHours').innerText = (totalWeekMins / 60).toFixed(1).replace(/\.0$/, '');
-            document.getElementById('journalCount').innerText = Object.values(journals).filter(j => j && j.text && j.text.trim()).length;
+
+            for (let d = 1; d <= daysInMonth; d++) {
+                const dateObj = new Date(calendarYear, calendarMonth, d);
+                const key = formatDateKey(dateObj);
+                const isToday = key === todayDateKey;
+                const isSelected = key === selectedDateKey;
+
+                const hasCheck = hasCheckData(key);
+                const hasDaily = hasDailyData(key);
+                const hasJour = hasJournalData(key);
+
+                const boxStyle = isSelected
+                    ? 'bg-indigo-600 text-white font-bold shadow-sm'
+                    : (isToday ? 'bg-indigo-50 text-indigo-600 border border-indigo-300 font-bold' : 'bg-slate-50 text-slate-700 hover:bg-slate-100');
+
+                html += `
+                    <button onclick="selectDateKey('${key}')" class="h-12 rounded-xl flex flex-col items-center justify-center relative transition ${boxStyle}">
+                        <span class="text-xs">${d}</span>
+                        <div class="flex gap-1 mt-1 h-1.5 items-center">
+                            ${hasCheck ? `<span class="w-1.5 h-1.5 rounded-full ${isSelected ? 'bg-white' : 'bg-indigo-500'}"></span>` : ''}
+                            ${hasDaily ? `<span class="w-1.5 h-1.5 rounded-full ${isSelected ? 'bg-amber-200' : 'bg-amber-500'}"></span>` : ''}
+                            ${hasJour ? `<span class="w-1.5 h-1.5 rounded-full ${isSelected ? 'bg-emerald-200' : 'bg-emerald-500'}"></span>` : ''}
+                        </div>
+                    </button>
+                `;
+            }
+            grid.innerHTML = html;
+            renderMonthDayDetail();
+        }
+
+        function jumpEditFromMonth(targetTab) {
+            // 计算选中日期相对于本周的周偏移量
+            const selMonday = getMondayOfDate(parseDateKey(selectedDateKey));
+            const curMonday = getMondayOfDate(new Date());
+            const diffDays = Math.round((selMonday - curMonday) / (1000 * 60 * 60 * 24));
+            currentWeekOffset = Math.round(diffDays / 7);
+            saveAndRender();
+            switchTab(targetTab);
+        }
+
+        function renderMonthDayDetail() {
+            const card = document.getElementById('monthDayDetailCard');
+            const selDateObj = parseDateKey(selectedDateKey);
+            const weekIdx = selDateObj.getDay() === 0 ? 6 : selDateObj.getDay() - 1;
+            const rec = ensureDateRecord(selectedDateKey);
+
+            const doneHabits = habits.filter(h => rec.checks && rec.checks[h.id]);
+            const meals = rec.meals || {};
+            const hasMeals = Object.values(meals).some(v => v && v.trim());
+            const studies = rec.studies || [];
+            const totalMins = studies.reduce((s, i) => s + (Number(i.duration) || 0), 0);
+            const journal = rec.journal || { mood: '', text: '' };
+
+            const habitsHtml = doneHabits.length > 0
+                ? doneHabits.map(h => `<span class="text-[11px] bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded-lg font-medium">✓ ${h.name}</span>`).join('')
+                : `<span class="text-xs text-slate-400">当天未打卡</span>`;
+
+            const mealsHtml = hasMeals ? `
+                <div class="grid grid-cols-2 gap-1.5 text-xs text-slate-600 bg-amber-50/40 p-2.5 rounded-xl border border-amber-100/60">
+                    <div><b class="text-amber-700">早餐：</b>${meals.breakfast || '-'}</div>
+                    <div><b class="text-orange-700">午餐：</b>${meals.lunch || '-'}</div>
+                    <div><b class="text-indigo-700">晚餐：</b>${meals.dinner || '-'}</div>
+                    <div><b class="text-emerald-700">加餐：</b>${meals.snack || '-'}</div>
+                </div>
+            ` : `<p class="text-xs text-slate-400">未记录三餐</p>`;
+
+            const studyHtml = studies.length > 0
+                ? studies.map(s => `<div class="text-xs text-slate-700 flex justify-between bg-slate-50 px-2.5 py-1.5 rounded-lg"><span>· ${s.topic}</span><span class="text-indigo-600 font-semibold">${s.duration}m</span></div>`).join('')
+                : `<p class="text-xs text-slate-400">未记录学习内容</p>`;
+
+            card.innerHTML = `
+                <div class="flex justify-between items-center pb-2 border-b border-slate-100">
+                    <div>
+                        <span class="text-sm font-bold text-slate-800">${selDateObj.getFullYear()}年${selDateObj.getMonth() + 1}月${selDateObj.getDate()}日 ${DAYS[weekIdx]}</span>
+                        <span class="ml-1">${journal.mood || ''}</span>
+                    </div>
+                    <button onclick="jumpEditFromMonth('daily')" class="text-xs text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-lg font-medium active:bg-indigo-100">✎ 编辑当天</button>
+                </div>
+
+                <div>
+                    <p class="text-[11px] font-bold text-slate-400 mb-1.5">✅ 完成习惯 (${doneHabits.length}/${habits.length})</p>
+                    <div class="flex flex-wrap gap-1.5">${habitsHtml}</div>
+                </div>
+
+                <div>
+                    <p class="text-[11px] font-bold text-slate-400 mb-1.5">🍱 当日三餐</p>
+                    ${mealsHtml}
+                </div>
+
+                <div>
+                    <p class="text-[11px] font-bold text-slate-400 mb-1.5">📚 学习记录 (共 ${totalMins} 分钟)</p>
+                    <div class="space-y-1">${studyHtml}</div>
+                </div>
+
+                <div>
+                    <p class="text-[11px] font-bold text-slate-400 mb-1.5">📖 复盘随笔</p>
+                    <p class="text-xs text-slate-600 whitespace-pre-line bg-slate-50 p-2.5 rounded-xl">${journal.text ? journal.text : '当天未写复盘日记'}</p>
+                </div>
+            `;
+        }
+
+        // --- 顶部本月实时汇总指标 ---
+        function updateMetrics() {
+            const total = habits.length;
+            const todayRec = recordsByDate[todayDateKey];
+            const todayDone = habits.filter(h => todayRec && todayRec.checks && todayRec.checks[h.id]).length;
+            document.getElementById('todayProgress').innerText = `${todayDone}/${total}`;
+
+            // 统计当前手机所在月份的累计数据
+            const now = new Date();
+            const ymPrefix = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-`;
+            let monthChecks = 0, monthStudyMins = 0, monthJournals = 0;
+
+            Object.entries(recordsByDate).forEach(([key, rec]) => {
+                if (key.startsWith(ymPrefix)) {
+                    if (rec.checks) monthChecks += Object.values(rec.checks).filter(Boolean).length;
+                    if (rec.studies) monthStudyMins += rec.studies.reduce((s, item) => s + (Number(item.duration) || 0), 0);
+                    if (rec.journal && rec.journal.text && rec.journal.text.trim()) monthJournals++;
+                }
+            });
+
+            document.getElementById('monthCheckCount').innerText = monthChecks;
+            document.getElementById('monthStudyHours').innerText = (monthStudyMins / 60).toFixed(1).replace(/\.0$/, '');
+            document.getElementById('monthJournalCount').innerText = monthJournals;
         }
 
         function updateCharts() {
-            const dailyCounts = DAYS.map((_, i) => habits.reduce((s, h) => s + (h.checks[i] ? 1 : 0), 0));
+            const weekDates = getWeekDatesByOffset(currentWeekOffset);
+            const labels = weekDates.map((d, i) => `${SHORT_DAYS[i]}(${d.getDate()})`);
+
+            const dailyCounts = weekDates.map(d => {
+                const k = formatDateKey(d);
+                const rec = recordsByDate[k];
+                return habits.reduce((s, h) => s + (rec && rec.checks && rec.checks[h.id] ? 1 : 0), 0);
+            });
+
             if (dailyChartInstance) dailyChartInstance.destroy();
             dailyChartInstance = new Chart(document.getElementById('dailyChart'), {
                 type: 'bar',
-                data: { labels: SHORT_DAYS, datasets: [{ data: dailyCounts, backgroundColor: '#4f46e5', borderRadius: 6 }] },
+                data: { labels, datasets: [{ data: dailyCounts, backgroundColor: '#4f46e5', borderRadius: 6 }] },
                 options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
             });
 
-            const studyMins = DAYS.map((_, i) => {
-                if (!dailyLogs[i] || !dailyLogs[i].studies) return 0;
-                return dailyLogs[i].studies.reduce((sum, s) => sum + (Number(s.duration) || 0), 0);
+            const studyMins = weekDates.map(d => {
+                const k = formatDateKey(d);
+                const rec = recordsByDate[k];
+                if (!rec || !rec.studies) return 0;
+                return rec.studies.reduce((sum, s) => sum + (Number(s.duration) || 0), 0);
             });
             if (studyChartInstance) studyChartInstance.destroy();
             studyChartInstance = new Chart(document.getElementById('studyChart'), {
                 type: 'bar',
-                data: { labels: SHORT_DAYS, datasets: [{ data: studyMins, backgroundColor: '#10b981', borderRadius: 6 }] },
+                data: { labels, datasets: [{ data: studyMins, backgroundColor: '#10b981', borderRadius: 6 }] },
                 options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
             });
 
             if (streakChartInstance) streakChartInstance.destroy();
             streakChartInstance = new Chart(document.getElementById('streakChart'), {
                 type: 'bar',
-                data: { labels: habits.map(h => h.name.slice(0, 6)), datasets: [{ data: habits.map(h => calculateStreak(h.checks)), backgroundColor: '#f59e0b', borderRadius: 6 }] },
-                options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true, max: 7, ticks: { stepSize: 1 } } } }
+                data: {
+                    labels: habits.map(h => h.name.slice(0, 6)),
+                    datasets: [{ data: habits.map(h => calculateTotalHabitChecks(h.id)), backgroundColor: '#f59e0b', borderRadius: 6 }]
+                },
+                options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true, ticks: { stepSize: 1 } } } }
             });
         }
 
         function openBackupModal() {
-            document.getElementById('backupText').value = JSON.stringify({ habits, journals, dailyLogs });
+            document.getElementById('backupText').value = JSON.stringify({ habits, recordsByDate });
             document.getElementById('backupModal').classList.replace('hidden', 'flex');
         }
         function closeBackupModal() { document.getElementById('backupModal').classList.replace('flex', 'hidden'); }
         function copyBackup() {
             const el = document.getElementById('backupText'); el.select(); document.execCommand('copy');
-            alert('备份代码已复制！可粘贴到微信文件传输助手保存。');
+            alert('备份代码已复制！可粘贴到微信或备忘录保存。');
         }
         function importBackup() {
             try {
                 const data = JSON.parse(document.getElementById('backupText').value);
                 if (data.habits) habits = data.habits;
-                if (data.journals) journals = data.journals;
-                if (data.dailyLogs) dailyLogs = data.dailyLogs;
+                if (data.recordsByDate) recordsByDate = data.recordsByDate;
                 saveAndRender(); closeBackupModal(); alert('恢复成功！');
             } catch (e) { alert('数据格式有误，请检查！'); }
-        }
-        function resetData() {
-            if (confirm('确定恢复初始演示数据？')) { localStorage.clear(); location.reload(); }
         }
 
         document.getElementById('journalInput').addEventListener('input', handleJournalInput);
