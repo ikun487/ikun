@@ -1,0 +1,125 @@
+{
+  "habits": [
+    {
+      "id": 1,
+      "name": "代码提交与技术复盘"
+    },
+    {
+      "id": 2,
+      "name": "英语阅读 / 听力训练"
+    },
+    {
+      "id": 3,
+      "name": "有氧运动 / 核心训练"
+    },
+    {
+      "id": 4,
+      "name": "23:30前放下手机早睡"
+    }
+  ],
+  "recordsByDate": {
+    "2026-11-13": {
+      "checks": {
+        "1": true
+      },
+      "meals": {
+        "breakfast": "",
+        "lunch": "",
+        "dinner": "",
+        "snack": ""
+      },
+      "studies": [],
+      "journal": {
+        "mood": "",
+        "text": ""
+      }
+    },
+    "2026-11-02": {
+      "checks": {},
+      "meals": {
+        "breakfast": "",
+        "lunch": "",
+        "dinner": "",
+        "snack": ""
+      },
+      "studies": [],
+      "journal": {
+        "mood": "",
+        "text": ""
+      }
+    },
+    "2026-10-26": {
+      "checks": {},
+      "meals": {
+        "breakfast": "",
+        "lunch": "",
+        "dinner": "",
+        "snack": ""
+      },
+      "studies": [],
+      "journal": {
+        "mood": "",
+        "text": ""
+      }
+    },
+    "2026-11-09": {
+      "checks": {
+        "1": true,
+        "2": true,
+        "3": true
+      },
+      "meals": {
+        "breakfast": "",
+        "lunch": "",
+        "dinner": "",
+        "snack": ""
+      },
+      "studies": [],
+      "journal": {
+        "mood": "",
+        "text": ""
+      }
+    },
+    "2026-11-11": {
+      "checks": {
+        "2": true
+      },
+      "meals": {
+        "breakfast": "",
+        "lunch": "",
+        "dinner": "",
+        "snack": ""
+      },
+      "studies": [],
+      "journal": {
+        "mood": "",
+        "text": ""
+      }
+    },
+    "2026-11-12": {
+      "checks": {
+        "3": true
+      },
+      "meals": {
+        "breakfast": "",
+        "lunch": "",
+        "dinner": "",
+        "snack": ""
+      },
+      "studies": [],
+      "journal": {
+        "mood": "",
+        "text": ""
+      }
+    }
+  },
+  "goalsList": [
+    {
+      "id": 101,
+      "name": "规律作息与戒端挑战",
+      "targetDays": 7,
+      "startDateKey": "2026-11-13",
+      "status": "ongoing"
+    }
+  ]
+}
