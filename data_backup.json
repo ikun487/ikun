@@ -20,7 +20,8 @@
   "recordsByDate": {
     "2026-11-13": {
       "checks": {
-        "1": true
+        "1": true,
+        "2": true
       },
       "meals": {
         "breakfast": "",
