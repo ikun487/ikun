@@ -1,5 +1,10 @@
 {
-  "habits": [],
+  "habits": [
+    {
+      "id": 1795328621919,
+      "name": "早晚刷牙"
+    }
+  ],
   "recordsByDate": {
     "2026-11-13": {
       "checks": {
