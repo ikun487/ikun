@@ -159,6 +159,23 @@
         "mood": "",
         "text": ""
       }
+    },
+    "2026-11-23": {
+      "checks": {
+        "1795328621919": true,
+        "1795328635939": true
+      },
+      "meals": {
+        "breakfast": "",
+        "lunch": "",
+        "dinner": "",
+        "snack": ""
+      },
+      "studies": [],
+      "journal": {
+        "mood": "",
+        "text": ""
+      }
     }
   },
   "goalsList": [
